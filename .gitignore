@@ -9,3 +9,6 @@ storage/uploads/*
 
 backend/database/database.sqlite
 .laravel-skeleton
+
+.env-bkc
+*.env-bkc

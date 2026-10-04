@@ -11,7 +11,9 @@
     "dev:frontend": "npm --prefix frontend run dev",
     "build": "npm --prefix frontend run build",
     "preview": "npm --prefix frontend run preview",
-    "test:backend": "cd backend && php artisan test"
+    "test:backend": "cd backend && php artisan test",
+    "test:e2e": "node scripts/e2e-api.mjs"
+    
   },
   "devDependencies": {
     "concurrently": "^9.0.0"
