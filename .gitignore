@@ -1,0 +1,11 @@
+node_modules
+dist
+.env
+backend/vendor
+backend/.env
+storage/uploads/*
+!storage/uploads/.gitkeep
+.DS_Store
+
+backend/database/database.sqlite
+.laravel-skeleton

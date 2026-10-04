@@ -1,0 +1,19 @@
+{
+  "name": "kokango",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "postinstall": "npm --prefix frontend install",
+    "setup:backend": "node scripts/setup-backend.mjs",
+    "setup:backend:sqlite": "node scripts/setup-backend.mjs --sqlite",
+    "dev": "concurrently -n api,web -c yellow,green \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:backend": "cd backend && php artisan serve --port=8000",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "build": "npm --prefix frontend run build",
+    "preview": "npm --prefix frontend run preview",
+    "test:backend": "cd backend && php artisan test"
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.0"
+  }
+}
