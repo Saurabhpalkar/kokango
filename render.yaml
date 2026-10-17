@@ -1,0 +1,60 @@
+# Render Blueprint for the Kokango API (Render dashboard > New > Blueprint > pick this repo).
+# Values marked "sync: false" are asked for when you create the Blueprint (see deploy/render/README.md).
+services:
+  - type: web
+    name: kokango-api
+    runtime: docker
+    plan: free
+    region: singapore          # closest Render region to India
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    healthCheckPath: /up
+    autoDeploy: true           # pushes to main that change backend/ redeploy the API
+    buildFilter:
+      paths:
+        - backend/**
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: "false"
+      - key: APP_KEY
+        generateValue: true
+      - key: APP_URL
+        sync: false            # e.g. https://kokango-api.onrender.com
+      - key: FRONTEND_URL
+        value: https://kokango.netlify.app
+      - key: LOG_CHANNEL
+        value: stderr
+      - key: SESSION_DRIVER
+        value: file
+      - key: CACHE_STORE
+        value: file
+      - key: QUEUE_CONNECTION
+        value: sync
+      # Aiven free MySQL (Service > Overview > Connection information)
+      - key: DB_CONNECTION
+        value: mysql
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        sync: false
+      - key: DB_DATABASE
+        value: defaultdb
+      - key: DB_USERNAME
+        value: avnadmin
+      - key: DB_PASSWORD
+        sync: false
+      - key: DB_CA_CERT
+        sync: false            # paste the whole "CA certificate" text from Aiven
+      # first admin account (created once on the first start)
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: PAYMENT_DRIVER
+        value: fake
+      - key: SHIPPING_DRIVER
+        value: fake
+      - key: MAIL_MAILER
+        value: log
