@@ -11,7 +11,7 @@ defineProps({
   <a href="/" class="logo" :class="size" aria-label="Kokango, taste of the Konkan: home">
     <span class="badge" aria-hidden="true"><img src="/images/logo.png" alt="" width="423" height="600"></span>
     <span class="words" aria-hidden="true">
-      <span class="name">Kok<span class="gold">ango</span></span>
+      <span class="name">Kokan<span class="gold">Go</span></span>
       <span v-if="tagline" class="tag">Taste of the Konkan</span>
     </span>
   </a>

@@ -32,7 +32,7 @@ class CheckoutController extends Controller
         $cart = $this->carts->resolve($request);
 
         return response()->json([
-            'data' => $this->checkout->quote($cart, $request->validated('shipping_method')),
+            'data' => $this->checkout->quote($cart, $request->validated('shipping_method'), $request->validated('coupon_code'), $this->viewer()?->email),
         ]);
     }
 

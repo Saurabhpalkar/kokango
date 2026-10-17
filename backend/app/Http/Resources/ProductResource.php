@@ -27,6 +27,8 @@ class ProductResource extends JsonResource
             'image_url' => $imageUrl,
             'images' => $imageUrl ? [$imageUrl] : [],
             'badge' => $this->badge,
+            'rating_avg' => $this->rating_avg !== null ? round((float) $this->rating_avg, 1) : null,
+            'rating_count' => (int) ($this->rating_count ?? 0),
             'is_active' => (bool) $this->is_active,
             'category' => $this->relationLoaded('category') && $this->category
                 ? ['id' => $this->category->id, 'slug' => $this->category->slug, 'name' => $this->category->name]

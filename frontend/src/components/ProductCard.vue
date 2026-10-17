@@ -8,6 +8,7 @@ import { useWishlistStore } from '@/stores/wishlist'
 import { useQuickViewStore } from '@/stores/quickview'
 import { inrp } from '@/utils/format'
 import { hoverPhoto } from '@/content/productPhotos'
+import { webpOf } from '@/utils/webp'
 import * as catalogue from '@/services/catalogueService'
 
 const props = defineProps({
@@ -47,8 +48,8 @@ async function addToCart() {
   <article class="pc" :class="{ out: !inStock }">
     <div class="pc-media">
       <a :href="`/product/${product.slug}`" class="pc-img" :aria-label="`View ${product.name}`" tabindex="-1">
-        <img class="main" :src="product.image_url" :alt="product.name" loading="lazy" decoding="async" width="600" height="600">
-        <img v-if="altImg" class="alt" :src="altImg" alt="" loading="lazy" decoding="async" width="600" height="600">
+        <picture><source v-if="webpOf(product.image_url)" :srcset="webpOf(product.image_url)" type="image/webp"><img class="main" :src="product.image_url" :alt="product.name" loading="lazy" decoding="async" width="600" height="600"></picture>
+        <picture><source v-if="webpOf(altImg)" :srcset="webpOf(altImg)" type="image/webp"><img v-if="altImg" class="alt" :src="altImg" alt="" loading="lazy" decoding="async" width="600" height="600"></picture>
       </a>
       <span v-if="off" class="pc-off">-{{ off }}%</span>
       <span v-if="badge" class="pc-badge">{{ badge }}</span>
@@ -69,6 +70,7 @@ async function addToCart() {
 
     <div class="pc-body">
       <h3 class="pc-name"><a :href="`/product/${product.slug}`">{{ product.name }}</a></h3>
+      <div v-if="product.rating_count" class="pc-rate" :aria-label="`Rated ${product.rating_avg} out of 5 from ${product.rating_count} reviews`"><span aria-hidden="true">&#9733;</span> {{ product.rating_avg.toFixed(1) }} <span class="pc-rc">({{ product.rating_count }})</span></div>
       <div class="pc-price">
         <template v-if="mrp"><s class="was"><span class="sr-only">Original price </span>{{ inrp(mrp) }}</s><span class="now sale"><span v-if="priceFrom" class="from">From </span>{{ inrp(price) }}</span></template>
         <span v-else class="now"><span v-if="priceFrom" class="from">From </span>{{ inrp(price) }}</span>
@@ -107,6 +109,9 @@ async function addToCart() {
 .pc-name { margin: 0; font-size: 17px; font-weight: 600; line-height: 1.3; letter-spacing: -.1px; }
 .pc-name a { color: var(--ink); }
 .pc-name a:hover { color: var(--forest); }
+.pc-rate { margin-top: 4px; font-size: 13px; font-weight: 700; color: var(--ink); }
+.pc-rate > span:first-child { color: #F2A900; }
+.pc-rc { font-weight: 500; color: var(--muted); }
 .pc-price { margin-top: 6px; display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; }
 .was { font-size: 15px; font-weight: 600; color: #9AA19B; }
 .now { font-size: 17px; font-weight: 700; color: var(--ink); }

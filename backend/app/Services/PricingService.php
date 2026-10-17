@@ -14,12 +14,13 @@ class PricingService
     /**
      * @return array{subtotal_paise:int,shipping_paise:int,tax_paise:int,discount_paise:int,total_paise:int}
      */
-    public function totals(int $subtotalPaise, string $shippingMethod = 'standard'): array
+    public function totals(int $subtotalPaise, string $shippingMethod = 'standard', int $discountPaise = 0): array
     {
         $subtotal = max(0, $subtotalPaise);
         $shipping = $subtotal > 0 ? $this->shippingRate($subtotal, $shippingMethod) : 0;
-        $tax = (int) round($subtotal * $this->gstPercent() / 100);
-        $discount = 0;
+        // a coupon discount comes off the goods; GST is charged on what the customer actually pays for them
+        $discount = max(0, min($discountPaise, $subtotal));
+        $tax = (int) round(($subtotal - $discount) * $this->gstPercent() / 100);
 
         return [
             'subtotal_paise' => $subtotal,

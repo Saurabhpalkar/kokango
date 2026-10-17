@@ -22,11 +22,11 @@
         <!-- gallery -->
         <div class="gal">
           <div class="mainbox card" :class="{ zooming }" @mousemove="onZoom" @mouseenter="zooming = true" @mouseleave="zooming = false">
-            <img :src="mainImg" :alt="`${product.name} pack`" :style="{ transformOrigin: zoomOrigin }" width="560" height="560">
+            <picture><source v-if="webpOf(mainImg)" :srcset="webpOf(mainImg)" type="image/webp"><img :src="mainImg" :alt="`${product.name} pack`" :style="{ transformOrigin: zoomOrigin }" width="560" height="560"></picture>
             <span v-if="savePct > 0" class="tag tag-sale sale">-{{ savePct }}%</span>
           </div>
           <div v-if="thumbs.length > 1" class="thumbs">
-            <button v-for="(t, i) in thumbs" :key="i" type="button" class="thumb" :class="{ on: t.img === mainImg }" :aria-label="`Show image ${i + 1} of ${thumbs.length}`" :aria-pressed="t.img === mainImg ? 'true' : 'false'" @click="mainImg = t.img"><img :src="t.img" alt="" loading="lazy" width="96" height="96"></button>
+            <button v-for="(t, i) in thumbs" :key="i" type="button" class="thumb" :class="{ on: t.img === mainImg }" :aria-label="`Show image ${i + 1} of ${thumbs.length}`" :aria-pressed="t.img === mainImg ? 'true' : 'false'" @click="mainImg = t.img"><picture><source v-if="webpOf(t.img)" :srcset="webpOf(t.img)" type="image/webp"><img :src="t.img" alt="" loading="lazy" width="96" height="96"></picture></button>
           </div>
         </div>
 
@@ -34,6 +34,7 @@
         <div class="info">
           <a class="catlink tag tag-soft" :href="`/products?category=${product.category.slug}`">{{ product.category.name }}</a>
           <h1>{{ product.name }}</h1>
+          <a v-if="product.rating_count" href="#rev-h" class="pd-rate" @click.prevent="scrollToReviews"><span class="pd-stars" aria-hidden="true">&#9733;</span> {{ product.rating_avg.toFixed(1) }} <span>({{ product.rating_count }} {{ product.rating_count === 1 ? 'review' : 'reviews' }})</span></a>
           <div v-if="product.hindi_name" class="hindi">{{ product.hindi_name }}</div>
 
           <div class="price">
@@ -98,6 +99,8 @@
       </section>
 
       <!-- related products from the same category -->
+      <ProductReviews :slug="product.slug" />
+
       <section v-if="related.length" class="rel" aria-labelledby="rel-h">
         <div class="sec-head"><div><div class="eyebrow">More to explore</div><h2 id="rel-h" class="sec-title">You may also like</h2></div><a :href="`/products?category=${product.category.slug}`" class="link-arrow">View all <span aria-hidden="true">&rarr;</span></a></div>
         <div class="pgrid"><ProductCard v-for="(p, k) in related" :key="p.id" v-reveal="{ delay: (k % 4) * 80 }" :product="p" :sizes="false" /></div>
@@ -123,6 +126,8 @@ import SiteHeader from '@/components/SiteHeader.vue'
 import SiteFooter from '@/components/SiteFooter.vue'
 import WhatsAppFab from '@/components/WhatsAppFab.vue'
 import ProductCard from '@/components/ProductCard.vue'
+import ProductReviews from '@/components/ProductReviews.vue'
+import { webpOf } from '@/utils/webp'
 import { useCartStore } from '@/stores/cart'
 import { useRouter, useRoute } from 'vue-router'
 import { ref, computed, watch, onBeforeUnmount } from 'vue'
@@ -152,6 +157,7 @@ const busy = ref(false)
 const related = ref([])
 const zooming = ref(false)
 
+const scrollToReviews = () => document.getElementById('rev-h')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 const usageSteps = computed(() => String(product.value?.how_to_use || '').split(/\n+/).map((s) => s.trim()).filter(Boolean))
 
 // phones: the bottom purchase bar appears only once the main buttons have scrolled out of view
@@ -307,6 +313,9 @@ async function checkPin() {
 .state h1 { margin: 0; font-size: 32px; font-weight: 800; }
 .state p { margin: 12px 0 22px; color: var(--muted); }
 
+.pd-rate { display: inline-flex; align-items: center; gap: 4px; margin-top: 6px; font-size: 14px; font-weight: 700; color: var(--ink); }
+.pd-rate span:last-child { font-weight: 500; color: var(--muted); text-decoration: underline; text-underline-offset: 3px; }
+.pd-stars { color: #F2A900; font-size: 17px; }
 .steps { margin: 4px 0 0; padding-left: 20px; font-size: 14px; line-height: 1.7; color: var(--muted); }
 
 /* mobile purchase bar */

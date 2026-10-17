@@ -68,8 +68,18 @@
             <div style="font-size:14px;font-weight:700;white-space:nowrap">{{ inrp(it.line_total_paise) }}</div>
           </div>
         </template>
+        <div class="coupon">
+          <form v-if="!couponApplied" class="coupon-f" novalidate @submit.prevent="applyCoupon">
+            <label class="sr-only" for="coupon">Coupon code</label>
+            <input id="coupon" v-model="couponInput" placeholder="Coupon code" autocomplete="off" autocapitalize="characters" :aria-invalid="couponErr ? 'true' : 'false'" aria-describedby="coupon-msg">
+            <button type="submit" class="btn btn-sm" :disabled="couponBusy || !couponInput.trim()">{{ couponBusy ? 'Checking…' : 'Apply' }}</button>
+          </form>
+          <div v-else class="coupon-on"><span><b>{{ couponApplied }}</b> applied{{ quote?.coupon?.description ? ': ' + quote.coupon.description : '' }}</span><button type="button" class="link-btn" @click="removeCoupon">Remove</button></div>
+          <p id="coupon-msg" class="coupon-msg" :class="{ bad: couponErr }" role="status">{{ couponErr || couponNote }}</p>
+        </div>
         <div style="border-top:1px dashed var(--line);margin-top:12px;padding-top:12px">
           <div style="display:flex;justify-content:space-between;padding:8px 0;font-size:14px;color:var(--muted)"><span>Subtotal</span><span style="color:var(--ink);font-weight:600">{{ inrp(sum.subtotal) }}</span></div>
+          <div v-if="sum.discount" style="display:flex;justify-content:space-between;padding:8px 0;font-size:14px;color:#1E7A34"><span>Coupon {{ couponApplied }}</span><span style="font-weight:700">&minus; {{ inrp(sum.discount) }}</span></div>
           <div style="display:flex;justify-content:space-between;padding:8px 0;font-size:14px;color:var(--muted)"><span>Shipping</span><span style="color:var(--ink);font-weight:600">{{ inrp(sum.shipping) }}</span></div>
           <div style="display:flex;justify-content:space-between;padding:8px 0;font-size:14px;color:var(--muted)"><span>Tax (GST 5%)</span><span style="color:var(--ink);font-weight:600">{{ inrp(sum.tax) }}</span></div>
           <div style="display:flex;justify-content:space-between;padding:16px 0 20px;font-size:21px;font-weight:800"><span>Total</span><span style="color:var(--green)">{{ inrp(sum.total) }}</span></div>
@@ -139,7 +149,7 @@ watch(methodList, (list) => { if (!list.some((m) => m.code === method.value)) me
 
 // ---- order summary from the server quote (re-quoted when the method or the cart changes)
 const sum = computed(() => quote.value
-  ? { subtotal: quote.value.subtotal_paise, shipping: quote.value.shipping_paise, tax: quote.value.tax_paise, total: quote.value.total_paise }
+  ? { subtotal: quote.value.subtotal_paise, discount: quote.value.discount_paise || 0, shipping: quote.value.shipping_paise, tax: quote.value.tax_paise, total: quote.value.total_paise }
   : { subtotal: cart.subtotalPaise, shipping: cart.shippingPaise, tax: cart.taxPaise, total: cart.totalPaise })
 // Cash on Delivery is offered when the shop allows it and the order is not above the shop's COD limit.
 const codAvailable = computed(() => {
@@ -149,12 +159,36 @@ const codAvailable = computed(() => {
 })
 watch(codAvailable, (ok) => { if (!ok && payMethod.value === 'cod') payMethod.value = 'online' })
 let quoteSeq = 0
+// ---- coupon: the server checks the code and computes the discount; the page only shows the result
+const couponInput = ref('')
+const couponApplied = ref('')
+const couponErr = ref('')
+const couponNote = ref('')
+const couponBusy = ref(false)
 async function refreshQuote() {
   if (!cart.items.length) { quote.value = null; return }
   const seq = ++quoteSeq
-  try { const q = await checkoutService.quote(method.value); if (seq === quoteSeq) quote.value = q }
-  catch (e) { if (seq === quoteSeq) quote.value = null }
+  try { const q = await checkoutService.quote(method.value, couponApplied.value); if (seq === quoteSeq) quote.value = q }
+  catch (e) {
+    if (seq !== quoteSeq) return
+    const err = apiError(e)
+    // the cart changed and the coupon no longer applies: drop it, keep the order going
+    if (couponApplied.value && err.errors.coupon_code) { couponErr.value = err.errors.coupon_code; couponApplied.value = ''; refreshQuote(); return }
+    quote.value = null
+  }
 }
+async function applyCoupon() {
+  const code = couponInput.value.trim().toUpperCase()
+  if (!code) return
+  couponBusy.value = true; couponErr.value = ''; couponNote.value = ''
+  try {
+    const q = await checkoutService.quote(method.value, code)
+    ++quoteSeq; quote.value = q; couponApplied.value = q.coupon?.code || code; couponInput.value = ''
+    couponNote.value = 'You save ' + inrp(q.discount_paise) + '.'
+  } catch (e) { const err = apiError(e, 'This coupon could not be applied.'); couponErr.value = err.errors.coupon_code || err.message }
+  finally { couponBusy.value = false }
+}
+function removeCoupon() { couponApplied.value = ''; couponNote.value = ''; couponErr.value = ''; refreshQuote() }
 watch([method, () => cart.cart], refreshQuote, { immediate: true })
 
 // ---- pincode lookup (debounced, 6 digits)
@@ -272,6 +306,7 @@ async function submit() {
     address: { name: f.name.trim(), phone, line1: f.line.trim(), line2: f.district.trim() || undefined, city: f.city.trim(), state: f.state.trim(), pincode: f.pincode.trim() },
     shipping_method: method.value,
     payment_method: payMethod.value === 'cod' && codAvailable.value ? 'cod' : 'online',
+    ...(couponApplied.value ? { coupon_code: couponApplied.value } : {}),
   }
   if (!auth.isLoggedIn) body.customer = { name: f.name.trim(), email: f.email.trim(), phone }
   let order = null
@@ -306,6 +341,16 @@ async function submit() {
 </script>
 
 <style scoped>
+.coupon { margin-top: 14px; }
+.coupon-f { display: flex; gap: 8px; }
+.coupon-f input { flex: 1; min-width: 0; min-height: 42px; padding: 0 14px; border: 1.5px dashed #BFB9A0; border-radius: 12px; background: #FFFDF6; font: inherit; font-size: 14px; font-weight: 600; letter-spacing: .5px; text-transform: uppercase; color: var(--ink); }
+.coupon-f input:focus { outline: none; border-color: var(--forest); border-style: solid; box-shadow: 0 0 0 3px rgba(55, 146, 55, .2); }
+.coupon-f input::placeholder { text-transform: none; letter-spacing: 0; font-weight: 500; }
+.coupon-on { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 14px; border-radius: 12px; background: var(--tint); color: var(--forest); font-size: 13.5px; animation: pop-in .35s var(--ease); }
+.link-btn { border: 0; background: none; padding: 4px; color: var(--forest); font-weight: 700; text-decoration: underline; font-size: 13px; }
+.coupon-msg { margin: 6px 2px 0; min-height: 18px; font-size: 12.5px; font-weight: 600; color: #1E7A34; }
+.coupon-msg.bad { color: var(--danger); }
+@keyframes pop-in { from { opacity: 0; transform: scale(.96); } to { opacity: 1; transform: none; } }
 @media (max-width:900px){
 .split{gap:20px!important}
 .split>.split-main{flex:1 1 100%!important;min-width:0!important}

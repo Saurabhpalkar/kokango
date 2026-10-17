@@ -8,6 +8,7 @@ import { useToastStore } from '@/stores/toast'
 import { useWishlistStore } from '@/stores/wishlist'
 import { inrp } from '@/utils/format'
 import { hoverPhoto } from '@/content/productPhotos'
+import { webpOf } from '@/utils/webp'
 import * as catalogue from '@/services/catalogueService'
 
 const quick = useQuickViewStore()
@@ -108,9 +109,9 @@ function go(path) { close(); router.push(path) }
         <button ref="closeBtn" type="button" class="qv-x" aria-label="Close quick view" @click="close"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
 
         <div class="qv-media">
-          <div class="qv-img"><img :src="img" :alt="p.name" width="700" height="700"></div>
+          <div class="qv-img"><picture><source v-if="webpOf(img)" :srcset="webpOf(img)" type="image/webp"><img :src="img" :alt="p.name" width="700" height="700"></picture></div>
           <div v-if="images.length > 1" class="qv-thumbs">
-            <button v-for="(src, i) in images" :key="src" type="button" class="qv-thumb" :class="{ on: img === src }" :aria-label="`Show photo ${i + 1}`" :aria-pressed="img === src ? 'true' : 'false'" @click="img = src"><img :src="src" alt="" width="80" height="80"></button>
+            <button v-for="(src, i) in images" :key="src" type="button" class="qv-thumb" :class="{ on: img === src }" :aria-label="`Show photo ${i + 1}`" :aria-pressed="img === src ? 'true' : 'false'" @click="img = src"><picture><source v-if="webpOf(src)" :srcset="webpOf(src)" type="image/webp"><img :src="src" alt="" width="80" height="80"></picture></button>
           </div>
           <a class="qv-more" :href="`/product/${p.slug}`" @click.prevent="go(`/product/${p.slug}`)">More Product Info
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>
@@ -167,7 +168,7 @@ function go(path) { close(); router.push(path) }
                 <li v-if="i" class="plus" aria-hidden="true">+</li>
                 <li class="fbt-item" :class="{ off: !picks[x.slug] }">
                   <label class="fbt-chk"><input v-model="picks[x.slug]" type="checkbox" :aria-label="`Include ${x.name}`"></label>
-                  <img :src="x.image_url" alt="" width="160" height="160" loading="lazy">
+                  <picture><source v-if="webpOf(x.image_url)" :srcset="webpOf(x.image_url)" type="image/webp"><img :src="x.image_url" alt="" width="160" height="160" loading="lazy"></picture>
                   <div class="fbt-name">{{ i ? '1 × ' + x.name : 'This item: ' + x.name }}</div>
                   <div class="fbt-stock">In stock</div>
                   <div class="fbt-price"><s v-if="bundleMrp(x)">{{ inrp(bundleMrp(x)) }}</s> <mark>{{ inrp(bundlePrice(x)) }}</mark></div>

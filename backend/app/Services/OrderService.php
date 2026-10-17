@@ -31,6 +31,7 @@ class OrderService
         private ShippingService $shipping,
         private OrderNotifier $notifier,
         private MarketplaceService $marketplace,
+        private CouponService $coupons,
     ) {
     }
 
@@ -194,6 +195,9 @@ class OrderService
             }
 
             $o->forceFill(['payment_status' => 'failed'])->save();
+            if ($o->status !== 'cancelled') {
+                $this->coupons->release($o);
+            }
 
             if ($o->status !== 'cancelled') {
                 $this->restoreStock($o, 'Payment failed '.$o->order_no);
@@ -279,6 +283,9 @@ class OrderService
 
             $o->refresh();
             $o->forceFill(['status' => 'cancelled'])->save();
+            if ($stockHeld) {   // a failed payment already gave the coupon use back
+                $this->coupons->release($o);
+            }
         });
 
         $this->marketplace->syncOrder($order);

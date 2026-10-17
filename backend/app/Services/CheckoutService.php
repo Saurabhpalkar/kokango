@@ -31,6 +31,7 @@ class CheckoutService
         private ShippingService $shipping,
         private PaymentGatewayInterface $gateway,
         private OrderService $orders,
+        private CouponService $coupons,
     ) {
     }
 
@@ -59,7 +60,7 @@ class CheckoutService
     /**
      * @return array<string, mixed>
      */
-    public function quote(Cart $cart, string $method = 'standard'): array
+    public function quote(Cart $cart, string $method = 'standard', ?string $couponCode = null, ?string $customerEmail = null): array
     {
         $cart->loadMissing('items.variant.product');
 
@@ -87,7 +88,12 @@ class CheckoutService
 
         $subtotal = array_sum(array_column($items, 'line_total_paise'));
 
-        return ['items' => $items] + $this->pricing->totals($subtotal, $method);
+        // a coupon (if any) is checked against the current subtotal; an invalid code answers 422 on "coupon_code"
+        $coupon = $this->coupons->resolve($couponCode, $subtotal, $customerEmail);
+        $discount = $coupon ? $this->coupons->discount($coupon, $subtotal) : 0;
+
+        return ['items' => $items] + $this->pricing->totals($subtotal, $method, $discount)
+            + ['coupon' => $coupon ? ['code' => $coupon->code, 'description' => $coupon->description] : null];
     }
 
     /**
@@ -155,7 +161,12 @@ class CheckoutService
                 $subtotal += (int) $variant->price_paise * $qty;
             }
 
-            $totals = $this->pricing->totals($subtotal, $method);
+            // coupon checked again here, locked, so its last use cannot be taken twice
+            $coupon = $this->coupons->resolve($data['coupon_code'] ?? null, $subtotal, $customer['email'], true);
+            $totals = $this->pricing->totals($subtotal, $method, $coupon ? $this->coupons->discount($coupon, $subtotal) : 0);
+            if ($coupon) {
+                $coupon->increment('used_count');
+            }
 
             $codMax = (int) config('kokango.cod.max_paise');
             if ($payMethod === 'cod' && $codMax > 0 && $totals['total_paise'] > $codMax) {
@@ -182,6 +193,7 @@ class CheckoutService
                 'shipping_paise' => $totals['shipping_paise'],
                 'tax_paise' => $totals['tax_paise'],
                 'discount_paise' => $totals['discount_paise'],
+                'coupon_code' => $coupon?->code,
                 'total_paise' => $totals['total_paise'],
                 // A Cash on Delivery order is confirmed straight away; it is paid when the parcel is delivered.
                 'status' => $payMethod === 'cod' ? 'confirmed' : 'pending',

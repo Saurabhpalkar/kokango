@@ -16,6 +16,7 @@ class QuoteRequest extends FormRequest
     {
         return [
             'shipping_method' => ['required', Rule::in(['standard', 'express'])],
+            'coupon_code' => ['nullable', 'string', 'max:40'],
         ];
     }
 }

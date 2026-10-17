@@ -18,3 +18,5 @@ backend.zip
 frontend/src.zip
 frontend/src-bkc/
 deploy/*.zip
+deploy/infinityfree/*
+!deploy/infinityfree/README.md

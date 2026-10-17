@@ -77,6 +77,7 @@ class OrderResource extends JsonResource
             'shipping_paise' => (int) $order->shipping_paise,
             'tax_paise' => (int) $order->tax_paise,
             'discount_paise' => (int) $order->discount_paise,
+            'coupon_code' => $order->coupon_code,
             'total_paise' => (int) $order->total_paise,
             'payment' => $order->payment ? [
                 'gateway' => $order->payment->gateway,

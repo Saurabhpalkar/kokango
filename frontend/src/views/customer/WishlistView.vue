@@ -6,6 +6,7 @@ import SiteHeader from '@/components/SiteHeader.vue'
 import SiteFooter from '@/components/SiteFooter.vue'
 import WhatsAppFab from '@/components/WhatsAppFab.vue'
 import ProductCard from '@/components/ProductCard.vue'
+import { webpOf } from '@/utils/webp'
 import { useWishlistStore } from '@/stores/wishlist'
 import * as catalogue from '@/services/catalogueService'
 
@@ -46,7 +47,7 @@ const rows = computed(() => wishlist.items.map((x) => ({ saved: x, product: live
       <template v-for="r in rows" :key="r.saved.slug">
         <ProductCard v-if="r.product" :product="r.product" />
         <div v-else-if="!loading" class="gone card">
-          <img :src="r.saved.image_url" alt="" width="300" height="300">
+          <picture><source v-if="webpOf(r.saved.image_url)" :srcset="webpOf(r.saved.image_url)" type="image/webp"><img :src="r.saved.image_url" alt="" width="300" height="300"></picture>
           <div class="gone-b"><strong>{{ r.saved.name }}</strong><span>No longer available</span>
             <button type="button" class="btn btn-line btn-sm" @click="wishlist.remove(r.saved.slug)">Remove</button></div>
         </div>

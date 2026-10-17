@@ -69,3 +69,17 @@ export const adminUsers = {
   update: (id, payload) => api.put(`/admin/users/${id}`, payload).then(one),
   roles: () => api.get('/admin/roles').then(one),
 }
+
+export const adminCoupons = {
+  list: () => api.get('/admin/coupons').then(one),
+  create: (payload) => api.post('/admin/coupons', payload).then(one),
+  update: (id, payload) => api.put(`/admin/coupons/${id}`, payload).then(one),
+  /** Returns { message } or, when the coupon was used before, { message, data } (switched off instead). */
+  remove: (id) => api.delete(`/admin/coupons/${id}`).then(body),
+}
+
+export const adminReviews = {
+  list: (params) => api.get('/admin/reviews', { params: clean(params) }).then(body),
+  setStatus: (id, status) => api.put(`/admin/reviews/${id}`, { status }).then(one),
+  remove: (id) => api.delete(`/admin/reviews/${id}`).then(body),
+}

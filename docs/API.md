@@ -106,6 +106,17 @@ Base URL: `{APP_URL}/api/v1` (local: `http://localhost:8000/api/v1`). All bodies
 - **Listing review**: `GET /admin/product-approvals?status=pending_review|active|rejected|paused|all&search=&page=` -> `{data:[listing + vendor_name, vendor_status], meta, counts}`; `POST /admin/product-approvals/{id}/approve|reject|unpublish` `{reason?}` (reject needs `reason`, shown to the seller).
 - **Seller payouts**: `GET /admin/vendor-payouts` -> `{data:{summary, vendors:[balance rows + min_ok], payouts, settings}}`; `POST /admin/vendor-payouts` `{vendor_id}` (pays all delivered, unsettled vendor orders; 409 when nothing is due, below the minimum or no bank account); `POST /admin/vendor-payouts/{id}/status` `{status: processing|paid, utr?}` (`paid` needs `utr`).
 
+- **Coupons**: `GET /admin/coupons`, `POST /admin/coupons`, `PUT /admin/coupons/{id}`, `DELETE /admin/coupons/{id}` (a coupon already used on an order is switched off instead of deleted). Body: `{code (A-Z 0-9 - _), description?, type: percent|fixed, value (percent 1-90, or paise), min_subtotal_paise?, max_discount_paise?, starts_at?, ends_at?, usage_limit?, once_per_customer?, is_active?}`; rows add `used_count` and `state` (active | scheduled | expired | used_up | off).
+- **Reviews**: `GET /admin/reviews?status=published|hidden&rating=&search=&page=` -> `{data, meta, counts}`; `PUT /admin/reviews/{id}` `{status: published|hidden}`; `DELETE /admin/reviews/{id}`.
+
+## Coupons at checkout
+`POST /checkout/quote` and `POST /checkout` accept an optional `coupon_code`. The server checks it (active, dates, minimum order, total uses, one use per customer email) and computes the discount: an invalid code answers 422 with `errors.coupon_code`. The quote adds `discount_paise` and `coupon {code, description}`; GST is charged on the subtotal after the discount (`total = subtotal - discount + shipping + GST`). The order stores `coupon_code`; a cancelled order or a failed payment gives the coupon use back.
+
+## Product reviews
+- `GET /products/{slug}/reviews?page=&per_page=` (optional auth) -> `{data:[{id, rating, title, body, name ("Priya S."), verified, created_at}], meta, summary:{count, average, stars:{5..1}}, viewer:{signed_in, can_review, review}}`.
+- `POST /products/{slug}/reviews` (auth) `{rating 1-5, title?, body (10-2000 chars)}`: only a customer with an order for the product that went ahead (not pending, cancelled or failed); one review per product, writing again updates it. A review hidden by the shop stays hidden after an edit.
+- Products in the catalogue add `rating_avg` (or null) and `rating_count` (published reviews only).
+
 ## Vendor (seller) endpoints (prefix `/vendor`)
 Sellers sign in separately: `Authorization: Bearer <vendor token>` (the frontend keeps it in `kokango_vendor_token`). All routes except register/login need `auth:sanctum` + a vendor store (403 otherwise).
 - **Auth**: `POST /vendor/auth/register` `{store_name, owner_name, email, phone, city, password, gst_no?, description?}` -> 201 `{data:{token, vendor}}` (store starts `pending`); `POST /vendor/auth/login` `{login (email), password}` -> `{data:{token, vendor}}` (403 when suspended or rejected); `GET /vendor/auth/me`; `POST /vendor/auth/logout`.

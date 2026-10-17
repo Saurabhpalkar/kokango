@@ -46,6 +46,11 @@ class Product extends Model
         return $this->belongsTo(Vendor::class);
     }
 
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(ProductReview::class);
+    }
+
     public function variants(): HasMany
     {
         return $this->hasMany(ProductVariant::class)->orderBy('price_paise');

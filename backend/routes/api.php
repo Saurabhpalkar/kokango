@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\V1\Admin\CategoryController as AdminCategoryController;
+use App\Http\Controllers\Api\V1\Admin\CouponController as AdminCouponController;
 use App\Http\Controllers\Api\V1\Admin\CustomerController as AdminCustomerController;
 use App\Http\Controllers\Api\V1\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Api\V1\Admin\InventoryController as AdminInventoryController;
@@ -9,6 +10,7 @@ use App\Http\Controllers\Api\V1\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Api\V1\Admin\PaymentController as AdminPaymentController;
 use App\Http\Controllers\Api\V1\Admin\ProductApprovalController as AdminProductApprovalController;
 use App\Http\Controllers\Api\V1\Admin\ProductController as AdminProductController;
+use App\Http\Controllers\Api\V1\Admin\ReviewController as AdminReviewController;
 use App\Http\Controllers\Api\V1\Admin\SettingController as AdminSettingController;
 use App\Http\Controllers\Api\V1\Admin\ShipmentController as AdminShipmentController;
 use App\Http\Controllers\Api\V1\Admin\UserController as AdminUserController;
@@ -20,6 +22,7 @@ use App\Http\Controllers\Api\V1\Customer\CatalogueController;
 use App\Http\Controllers\Api\V1\Customer\CheckoutController;
 use App\Http\Controllers\Api\V1\Customer\OrderController;
 use App\Http\Controllers\Api\V1\Customer\PaymentController;
+use App\Http\Controllers\Api\V1\Customer\ReviewController;
 use App\Http\Controllers\Api\V1\Customer\ShipmentController;
 use App\Http\Controllers\Api\V1\Customer\ShippingController;
 use App\Http\Controllers\Api\V1\Vendor\VendorAuthController;
@@ -62,6 +65,8 @@ Route::middleware(['throttle:api', 'active'])->group(function () {
     Route::get('/categories', [CatalogueController::class, 'categories']);
     Route::get('/products', [CatalogueController::class, 'products']);
     Route::get('/products/{slug}', [CatalogueController::class, 'show']);
+    Route::get('/products/{slug}/reviews', [ReviewController::class, 'index']);
+    Route::post('/products/{slug}/reviews', [ReviewController::class, 'store'])->middleware(['auth:sanctum', 'throttle:auth']);
     Route::get('/settings/public', [CatalogueController::class, 'publicSettings']);
 
     // ---- Cart (optional auth) --------------------------------------------
@@ -141,6 +146,15 @@ Route::middleware(['throttle:api', 'active'])->group(function () {
         Route::post('/users', [AdminUserController::class, 'store']);
         Route::put('/users/{id}', [AdminUserController::class, 'update'])->whereNumber('id');
         Route::get('/roles', [AdminUserController::class, 'roles']);
+
+        Route::get('/coupons', [AdminCouponController::class, 'index']);
+        Route::post('/coupons', [AdminCouponController::class, 'store']);
+        Route::put('/coupons/{id}', [AdminCouponController::class, 'update'])->whereNumber('id');
+        Route::delete('/coupons/{id}', [AdminCouponController::class, 'destroy'])->whereNumber('id');
+
+        Route::get('/reviews', [AdminReviewController::class, 'index']);
+        Route::put('/reviews/{id}', [AdminReviewController::class, 'update'])->whereNumber('id');
+        Route::delete('/reviews/{id}', [AdminReviewController::class, 'destroy'])->whereNumber('id');
 
         // Marketplace (sellers, listing reviews, commission and payouts)
         Route::get('/marketplace/overview', [AdminMarketplaceController::class, 'overview']);

@@ -6,6 +6,8 @@ import WhatsAppFab from '@/components/WhatsAppFab.vue'
 import ProductCard from '@/components/ProductCard.vue'
 import StoryVideo from '@/components/StoryVideo.vue'
 import PalmTree from '@/components/PalmTree.vue'
+import PhotoDeck from '@/components/PhotoDeck.vue'
+import { webpOf } from '@/utils/webp'
 import { STATS, STORY, PROMISES, ABOUT, STEPS, TESTIMONIALS, FAQ_COUNT } from '@/content/home'
 import { getFaqData } from '@/content/faq'
 import { WHATSAPP_URL } from '@/utils/links'
@@ -44,7 +46,9 @@ const ICON = {
         <article v-for="(s, i) in slides" :key="s.id" class="slide" :class="{ live: i === current }" role="group" aria-roledescription="slide"
           :aria-label="`${i + 1} of ${slides.length}`" :aria-hidden="i !== current ? 'true' : null" :inert="i !== current ? '' : null">
           <picture class="slide-bg">
+            <source v-if="webpOf(s.imageMobile)" media="(max-width: 700px)" :srcset="webpOf(s.imageMobile)" type="image/webp">
             <source media="(max-width: 700px)" :srcset="s.imageMobile">
+            <source v-if="webpOf(s.image)" :srcset="webpOf(s.image)" type="image/webp">
             <img :src="s.image" alt="" :loading="i === 0 ? 'eager' : 'lazy'" :fetchpriority="i === 0 ? 'high' : null" decoding="async" width="1800" height="900">
           </picture>
           <div class="slide-in">
@@ -56,7 +60,7 @@ const ICON = {
               <a class="btn btn-sun scta" :href="s.cta.to">{{ s.cta.label }} <span aria-hidden="true">&rarr;</span></a>
             </div>
             <div v-if="s.packImages.length" class="packs" aria-hidden="true">
-              <img v-for="(src, k) in s.packImages" :key="k" :class="'p' + k + ' n' + s.packImages.length" :src="src" alt="" width="300" height="380" loading="lazy">
+              <picture v-for="(src, k) in s.packImages" :key="k"><source v-if="webpOf(src)" :srcset="webpOf(src)" type="image/webp"><img :class="'p' + k + ' n' + s.packImages.length" :src="src" alt="" width="300" height="380" loading="lazy"></picture>
             </div>
           </div>
         </article>
@@ -94,7 +98,7 @@ const ICON = {
       <ul class="cats">
         <li v-for="(c, k) in categoryTiles" :key="c.slug" v-reveal="{ delay: k * 90 }">
           <a class="cat" :href="`/products?category=${encodeURIComponent(c.slug)}`">
-            <span class="cat-ring"><img :src="c.photo" alt="" loading="lazy" decoding="async" width="300" height="300"></span>
+            <span class="cat-ring"><picture><source v-if="webpOf(c.photo)" :srcset="webpOf(c.photo)" type="image/webp"><img :src="c.photo" alt="" loading="lazy" decoding="async" width="300" height="300"></picture></span>
             <span class="cat-name">{{ c.name }}</span>
           </a>
         </li>
@@ -126,8 +130,8 @@ const ICON = {
     <!-- ABOUT -->
     <section class="sec" aria-labelledby="about-h">
       <div class="wrap about">
-        <div v-reveal class="about-img">
-          <img :src="ABOUT.image" alt="Women working in a green field" loading="lazy" decoding="async" width="1100" height="900">
+        <div class="about-img">
+          <PhotoDeck :photos="ABOUT.photos" />
           <span class="about-badge"><strong>100%</strong> Konkan made</span>
         </div>
         <div class="about-t">
@@ -177,7 +181,7 @@ const ICON = {
         <ul class="wrap points">
           <li v-for="(p, k) in STORY.points" :key="p.title" v-reveal="{ delay: k * 110 }">
             <div class="point">
-              <div class="point-img"><img :src="p.image" alt="" loading="lazy" decoding="async" width="1000" height="700"></div>
+              <div class="point-img"><picture><source v-if="webpOf(p.image)" :srcset="webpOf(p.image)" type="image/webp"><img :src="p.image" alt="" loading="lazy" decoding="async" width="1000" height="700"></picture></div>
               <div class="point-t"><h3>{{ p.title }}</h3><p>{{ p.text }}</p></div>
             </div>
           </li>
@@ -339,9 +343,8 @@ const ICON = {
 /* ---------- about ---------- */
 .about { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 56px; align-items: center; }
 .about-img { position: relative; }
-.about-img img { width: 100%; aspect-ratio: 11 / 9; object-fit: cover; border-radius: 22px; display: block; box-shadow: 0 24px 50px rgba(16, 61, 44, .18); }
-.about-img::before { content: ''; position: absolute; inset: 18px -18px -18px 18px; z-index: -1; border-radius: 22px; background: var(--sun); }
-.about-badge { position: absolute; left: -16px; bottom: 26px; padding: 14px 18px; border-radius: 16px; background: var(--forest); color: #fff; font-size: 13px; font-weight: 600; box-shadow: 0 14px 30px rgba(16, 61, 44, .3); animation: bob 4s ease-in-out infinite; }
+.about-img::before { content: ''; position: absolute; left: 50%; top: 52%; width: 86%; aspect-ratio: 1; transform: translate(-50%, -50%); border-radius: 50%; background: radial-gradient(circle, rgba(254, 188, 4, .35) 0%, rgba(254, 188, 4, .12) 45%, transparent 70%); pointer-events: none; }
+.about-badge { position: absolute; z-index: 60; left: 0; bottom: 8%; padding: 14px 18px; border-radius: 16px; background: var(--forest); color: #fff; font-size: 13px; font-weight: 600; box-shadow: 0 14px 30px rgba(16, 61, 44, .3); animation: bob 4s ease-in-out infinite; }
 .about-badge strong { display: block; font-size: 24px; color: var(--mango); line-height: 1.1; }
 @keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
 .about-t .sec-title { margin: 6px 0 0; }
@@ -425,7 +428,6 @@ const ICON = {
   .tabs { flex-wrap: nowrap; justify-content: flex-start; overflow-x: auto; scrollbar-width: none; margin: -4px calc(var(--gutter) * -1) 18px; padding: 2px var(--gutter); }
   .tabs::-webkit-scrollbar { display: none; }
   .tabb { flex: none; min-height: 38px; padding: 0 16px; font-size: 13px; }
-  .about-img::before { inset: 10px -10px -10px 10px; }
   .about-badge { left: 10px; bottom: 14px; padding: 10px 14px; }
   .about-badge strong { font-size: 20px; }
   .about-p { font-size: 15px; }

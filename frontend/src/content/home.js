@@ -53,6 +53,14 @@ export const PROMISES = [
 // "About Kokango" teaser (links to the About page).
 export const ABOUT = {
   image: '/images/site/about-farm.jpg',
+  // fanned out like playing cards (components/PhotoDeck.vue)
+  photos: [
+    { src: '/images/site/about-field.jpg', alt: 'A smiling farmer in a green field', caption: 'Local farmers' },
+    { src: '/images/site/about-women.jpg', alt: 'Women sorting fresh leaves', caption: 'Sorted by hand' },
+    { src: '/images/site/about-farm.jpg', alt: 'Women picking leaves in a field', caption: 'Picked in season' },
+    { src: '/images/site/about-market.jpg', alt: 'Fresh jamun at a market stall', caption: 'Fresh fruit' },
+    { src: '/images/site/about-mango.jpg', alt: 'Ripe mango cut into cubes', caption: 'Konkan flavours' },
+  ],
   kicker: 'About Kokango',
   title: 'Konkan flavours, the way they are made at home',
   text: [

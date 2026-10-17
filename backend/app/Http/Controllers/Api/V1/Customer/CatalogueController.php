@@ -43,6 +43,7 @@ class CatalogueController extends Controller
                 'category:id,slug,name',
                 'variants' => fn ($q) => $q->where('is_active', true),
             ]);
+        $this->withRatings($query);
 
         $slug = $request->query('category');
         if (is_string($slug) && $slug !== '') {
@@ -80,6 +81,7 @@ class CatalogueController extends Controller
                 'category:id,slug,name',
                 'variants' => fn ($q) => $q->where('is_active', true),
             ])
+            ->tap(fn ($q) => $this->withRatings($q))
             ->firstOrFail();
 
         return new ProductResource($product);
@@ -101,5 +103,12 @@ class CatalogueController extends Controller
                 'cod_max_paise' => (int) config('kokango.cod.max_paise'),
             ],
         ]);
+    }
+
+    /** Average star rating and number of published reviews, for product cards and pages. */
+    private function withRatings($query): void
+    {
+        $published = fn ($q) => $q->where('status', 'published');
+        $query->withCount(['reviews as rating_count' => $published])->withAvg(['reviews as rating_avg' => $published], 'rating');
     }
 }
