@@ -11,14 +11,15 @@
 
   <template v-if="data">
     <div class="statgrid">
-      <div v-for="s in stats" :key="s.label" class="card stat" :style="`border-radius:26px;padding:22px;box-sizing:border-box;border-top:4px solid ${s.accent}`">
-        <div style="font-size:13px;font-weight:600;color:var(--muted)">{{ s.label }}</div>
-        <div style="font-size:32px;font-weight:800;margin-top:8px;color:var(--ink)">{{ s.value }}</div>
+      <div v-for="s in stats" :key="s.label" class="card stat">
+        <span class="sico" :style="`background:${s.tone};color:${s.fg}`" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" v-html="s.icon"></svg></span>
+        <div class="slabel">{{ s.label }}</div>
+        <div class="sval">{{ s.value }}</div>
       </div>
     </div>
 
     <div class="dgrid">
-      <div class="card" style="flex:2 1 520px;border-radius:30px;padding:26px;box-sizing:border-box;min-width:0;max-width:100%">
+      <div class="card" style="flex:2 1 520px;border-radius:18px;padding:26px;box-sizing:border-box;min-width:0;max-width:100%">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><h2 style="margin:0;font-size:19px;font-weight:800">Recent Orders</h2><RouterLink to="/admin/orders" style="font-size:13px;font-weight:700;color:var(--green)">View all</RouterLink></div>
         <div style="overflow-x:auto">
         <table class="rt" style="width:100%;border-collapse:collapse;min-width:520px">
@@ -31,12 +32,12 @@
         </div>
       </div>
 
-      <div class="card" style="flex:1 1 290px;border-radius:30px;padding:26px;box-sizing:border-box">
+      <div class="card" style="flex:1 1 290px;border-radius:18px;padding:26px;box-sizing:border-box">
         <h2 style="margin:0 0 12px;font-size:19px;font-weight:800">Low Stock</h2>
         <div v-for="l in data.low_stock" :key="l.variant_id" style="display:flex;align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--line)">
           <div style="flex:0 0 48px;height:48px;border-radius:12px;background:var(--tint);display:flex;align-items:center;justify-content:center;overflow:hidden"><img v-if="l.image_url" :src="l.image_url" alt="" style="height:100%;width:auto;object-fit:contain"></div>
           <div style="flex:1;font-size:14px;font-weight:700">{{ l.product_name }}<div style="font-size:12px;color:var(--muted);font-weight:500">{{ l.size_label }}</div></div>
-          <span style="color:#B3261E;font-weight:800;font-size:13px">{{ l.stock }} left</span>
+          <span style="color:var(--danger);font-weight:800;font-size:13px">{{ l.stock }} left</span>
         </div>
         <div v-if="!data.low_stock.length" style="padding:12px 0;border-top:1px solid var(--line);font-size:14px;color:var(--muted)">Everything is well stocked.</div>
         <RouterLink to="/admin/inventory" class="btn" style="display:flex;margin-top:16px">Restock</RouterLink>
@@ -63,17 +64,31 @@ const error = ref('')
 const today = new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
 
 const num = (n) => Number(n || 0).toLocaleString('en-IN')
+const I = {
+  orders: '<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/>',
+  clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  box: '<path d="M4 8l8-4 8 4v8l-8 4-8-4z"/><path d="M4 8l8 4 8-4M12 12v8"/>',
+  check: '<circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.7 2.7L16 9.5"/>',
+  rupee: '<path d="M7 5h10M7 9h10M7 5c5 0 7 2 7 4s-2 4-7 4l7 6"/>',
+  alert: '<path d="M12 4l9 16H3z"/><path d="M12 10v4M12 17.5v.1"/>',
+  truck: '<path d="M3 7h11v9H3zM14 10h4l3 3v3h-7z"/><circle cx="7.5" cy="17.5" r="1.7"/><circle cx="17.5" cy="17.5" r="1.7"/>',
+  users: '<circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.5 2.7-6 6-6s6 2.5 6 6M16 5.5a3 3 0 010 5.5M18 14.5c1.8.7 3 2.4 3 5.5"/>',
+}
 const stats = computed(() => {
   const s = data.value.stats
+  const green = { tone: 'var(--tint)', fg: 'var(--forest)' }
+  const sun = { tone: 'var(--sun)', fg: 'var(--amber)' }
+  const grey = { tone: '#EFECDD', fg: 'var(--muted)' }
+  const red = { tone: 'var(--danger-bg)', fg: 'var(--danger)' }
   return [
-    { label: 'Total Orders', value: num(s.total_orders), accent: '#0B5D1E' },
-    { label: 'Pending Orders', value: num(s.pending_orders), accent: '#C9C5B0' },
-    { label: 'Processing Orders', value: num(s.processing_orders), accent: '#FFB400' },
-    { label: 'Delivered Orders', value: num(s.delivered_orders), accent: '#9ACD32' },
-    { label: 'Total Sales', value: inrp(s.total_sales_paise), accent: '#0B5D1E' },
-    { label: 'Low Stock Products', value: num(s.low_stock_count), accent: '#D9534F' },
-    { label: 'Pending Shipments', value: num(s.pending_shipments), accent: '#FFB400' },
-    { label: 'Customers', value: num(s.customers), accent: '#9ACD32' },
+    { label: 'Total Orders', value: num(s.total_orders), icon: I.orders, ...green },
+    { label: 'Pending Orders', value: num(s.pending_orders), icon: I.clock, ...grey },
+    { label: 'Processing Orders', value: num(s.processing_orders), icon: I.box, ...sun },
+    { label: 'Delivered Orders', value: num(s.delivered_orders), icon: I.check, ...green },
+    { label: 'Total Sales', value: inrp(s.total_sales_paise), icon: I.rupee, ...green },
+    { label: 'Low Stock Products', value: num(s.low_stock_count), icon: I.alert, ...red },
+    { label: 'Pending Shipments', value: num(s.pending_shipments), icon: I.truck, ...sun },
+    { label: 'Customers', value: num(s.customers), icon: I.users, ...green },
   ]
 })
 
@@ -85,6 +100,10 @@ onMounted(load)
 </script>
 
 <style scoped>
+.stat{padding:20px;box-sizing:border-box;display:flex;flex-direction:column;gap:4px}
+.sico{width:42px;height:42px;border-radius:12px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:10px}
+.slabel{font-size:13px;font-weight:600;color:var(--muted)}
+.sval{font-size:28px;font-weight:800;letter-spacing:-.6px;color:var(--ink)}
 .dgrid{display:flex;flex-wrap:wrap;gap:24px;margin-top:24px;align-items:flex-start}
 @media (max-width:1099px){.dgrid>*{flex:1 1 100%!important;min-width:0}}
 @media (max-width:999px){.who{display:none!important}}

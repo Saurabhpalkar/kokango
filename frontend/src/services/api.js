@@ -3,6 +3,9 @@ import axios from 'axios'
 // One axios client for the whole app. Base URL comes from frontend/.env (VITE_API_BASE_URL).
 export const TOKEN_KEY = 'kokango_token'
 export const CART_TOKEN_KEY = 'kokango_cart_token'
+// The seller panel signs in separately, so /vendor/* calls carry the seller's own token.
+export const VENDOR_TOKEN_KEY = 'kokango_vendor_token'
+const isVendorCall = (config) => /^\/?vendor\//.test(config?.url || '')
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1',
@@ -12,7 +15,7 @@ const api = axios.create({
 
 api.interceptors.request.use((config) => {
   try {
-    const token = localStorage.getItem(TOKEN_KEY)
+    const token = localStorage.getItem(isVendorCall(config) ? VENDOR_TOKEN_KEY : TOKEN_KEY)
     if (token) config.headers.Authorization = `Bearer ${token}`
     const cartToken = localStorage.getItem(CART_TOKEN_KEY)
     if (cartToken) config.headers['X-Cart-Token'] = cartToken
@@ -24,7 +27,9 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (res) => res,
   (error) => {
-    if (error.response?.status === 401 && localStorage.getItem(TOKEN_KEY)) {
+    if (error.response?.status === 401 && isVendorCall(error.config)) {
+      localStorage.removeItem(VENDOR_TOKEN_KEY)
+    } else if (error.response?.status === 401 && localStorage.getItem(TOKEN_KEY)) {
       localStorage.removeItem(TOKEN_KEY)
       window.dispatchEvent(new CustomEvent('kokango:unauthorized'))
     }

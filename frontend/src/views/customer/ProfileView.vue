@@ -1,8 +1,7 @@
 <template>
 <div class="dcroot">
-<div style="width:100%;position:relative;overflow:hidden;background:var(--bg)">
+<div style="width:100%;background:var(--bg)">
   <AnnouncementBar />
-  <div style="position:absolute;top:-220px;right:-160px;width:520px;height:520px;border-radius:50%;background:var(--sun)"></div>
   <div class="wrap" style="position:relative;max-width:1280px;margin:0 auto;padding:0 32px;box-sizing:border-box">
 
     <SiteHeader active-icon="account" />
@@ -10,7 +9,7 @@
     <h1 class="ph1" style="margin:24px 0 32px;font-size:42px;font-weight:800;letter-spacing:-1px">My Account</h1>
 
     <section class="split" style="display:flex;flex-wrap:wrap;gap:32px;align-items:flex-start">
-      <aside class="card split-side pside" style="flex:0 0 270px;border-radius:32px;padding:20px;box-sizing:border-box">
+      <aside class="card split-side pside" style="flex:0 0 270px;border-radius:16px;padding:20px;box-sizing:border-box">
         <div class="phead" style="display:flex;align-items:center;gap:12px;padding:8px 8px 20px">
           <span style="width:52px;height:52px;border-radius:50%;background:var(--tint);color:var(--green);display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:18px">{{ initial }}</span>
           <div style="min-width:0"><div style="font-size:15px;font-weight:700;overflow-wrap:anywhere">{{ displayName }}</div><div style="font-size:12px;color:var(--muted);word-break:break-all">{{ displayEmail }}</div></div>
@@ -23,7 +22,7 @@
       </aside>
 
       <div class="split-main" style="flex:1 1 640px;display:flex;flex-direction:column;gap:24px">
-        <div v-if="show('orders')" class="card pad" style="border-radius:36px;padding:32px;box-sizing:border-box">
+        <div v-if="show('orders')" class="card pad" style="border-radius:16px;padding:32px;box-sizing:border-box">
           <h2 style="margin:0 0 20px;font-size:22px;font-weight:800">My Orders</h2>
           <p v-if="ordersLoading" style="margin:0;font-size:14px;color:var(--muted)">Loading your orders...</p>
           <p v-else-if="ordersError" class="err" role="alert" style="margin:0">{{ ordersError }} <button type="button" class="lnk" @click="loadOrders">Try again</button></p>
@@ -38,7 +37,7 @@
           </template>
         </div>
 
-        <div v-if="show('profile')" class="card pad" style="border-radius:36px;padding:32px;box-sizing:border-box">
+        <div v-if="show('profile')" class="card pad" style="border-radius:16px;padding:32px;box-sizing:border-box">
           <h2 style="margin:0 0 20px;font-size:22px;font-weight:800">Profile</h2>
           <form novalidate style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(240px,100%),1fr));gap:16px" @submit.prevent="saveProfile">
             <p v-if="perr.form" class="err" role="alert" style="grid-column:1/-1;margin:0">{{ perr.form }}</p>
@@ -49,7 +48,7 @@
           </form>
         </div>
 
-        <div v-if="show('addresses')" class="card pad" style="border-radius:36px;padding:32px;box-sizing:border-box">
+        <div v-if="show('addresses')" class="card pad" style="border-radius:16px;padding:32px;box-sizing:border-box">
           <div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;align-items:center;margin-bottom:20px"><h2 style="margin:0;font-size:22px;font-weight:800">Saved Addresses</h2><button type="button" class="btn-line" @click="openForm()">+ Add address</button></div>
           <form v-if="formOpen" novalidate class="aform" @submit.prevent="saveAddress">
             <div style="font-size:15px;font-weight:800;margin-bottom:14px">{{ editingId ? 'Edit address' : 'New address' }}</div>
@@ -69,13 +68,13 @@
           <p v-else-if="!addresses.length && !formOpen" style="margin:0;font-size:14px;color:var(--muted)">You have no saved addresses yet.</p>
           <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(280px,100%),1fr));gap:16px">
             <template v-for="a in addresses" :key="a.id">
-              <div v-if="a.is_default" style="border:2px solid var(--green);border-radius:24px;padding:20px;background:var(--tint)">
+              <div v-if="a.is_default" style="border:2px solid var(--green);border-radius:14px;padding:20px;background:var(--tint)">
                 <div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:8px"><span style="font-weight:800">{{ a.name }}</span><span class="badge" style="background:var(--green);color:#fff">Default</span></div>
                 <div style="font-size:13px;line-height:1.7;color:var(--muted)">{{ a.line1 }}<span v-if="a.line2">, {{ a.line2 }}</span><br>{{ a.city }}, {{ a.state }} {{ a.pincode }}<br>+91 {{ a.phone }}</div>
                 <div v-if="confirmId === a.id" class="confirm">Delete this address? <button type="button" class="lnk" @click="removeAddress(a.id)">Yes, delete</button><button type="button" class="lnk" @click="confirmId = null">Cancel</button></div>
                 <div v-else style="display:flex;gap:16px;margin-top:12px;font-size:13px;font-weight:700"><button type="button" class="lnk" @click="openForm(a)">Edit</button><button type="button" class="lnk" @click="confirmId = a.id">Delete</button></div>
               </div>
-              <div v-else style="border:1.5px solid var(--line);border-radius:24px;padding:20px;background:#fff">
+              <div v-else style="border:1.5px solid var(--line);border-radius:14px;padding:20px;background:#fff">
                 <div style="font-size:14px;font-weight:800;margin-bottom:8px">{{ a.name }}</div>
                 <div style="font-size:13px;line-height:1.7;color:var(--muted)">{{ a.line1 }}<span v-if="a.line2">, {{ a.line2 }}</span><br>{{ a.city }}, {{ a.state }} {{ a.pincode }}<br>+91 {{ a.phone }}</div>
                 <div v-if="confirmId === a.id" class="confirm">Delete this address? <button type="button" class="lnk" @click="removeAddress(a.id)">Yes, delete</button><button type="button" class="lnk" @click="confirmId = null">Cancel</button></div>
@@ -85,7 +84,7 @@
           </div>
         </div>
 
-        <div v-if="show('password')" class="card pad" style="border-radius:36px;padding:32px;box-sizing:border-box">
+        <div v-if="show('password')" class="card pad" style="border-radius:16px;padding:32px;box-sizing:border-box">
           <h2 style="margin:0 0 20px;font-size:22px;font-weight:800">Change Password</h2>
           <form novalidate style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(240px,100%),1fr));gap:16px" @submit.prevent="savePassword">
             <p v-if="werr.form" class="err" role="alert" style="grid-column:1/-1;margin:0">{{ werr.form }}</p>
@@ -256,28 +255,13 @@ onMounted(() => { loadOrders(); loadAddresses() })
 </script>
 
 <style scoped>
-.dcroot{--bg:#F8F7EF;--surface:#fff;--ink:#14301C;--muted:#566659;--line:#E6E2D0;--green:#0B5D1E;--leaf:#9ACD32;--mango:#FFB400;--amber:#9A5B00;--tint:#EAF3DD;--sun:#FFF1CC}
-.dcroot{margin:0;background:var(--bg);color:var(--ink);font-family:'Plus Jakarta Sans','Noto Sans Devanagari',system-ui,sans-serif}
-a{color:var(--ink);text-decoration:none}a:hover{color:var(--green)}
-button{font-family:inherit;cursor:pointer}
-.card{background:var(--surface);border:1px solid var(--line);box-shadow:0 10px 30px rgba(20,48,28,0.06)}
-.btn{background:var(--green);color:#fff;border:none;border-radius:999px;padding:10px 24px;font-size:14px;font-weight:600;min-height:44px;display:inline-flex;align-items:center;justify-content:center}
-.btn:hover{background:#08481a;color:#fff}
-.btn-line{background:transparent;color:var(--ink);border:1.5px solid var(--ink);border-radius:999px;padding:9px 20px;font-size:14px;font-weight:600;min-height:44px;display:inline-flex;align-items:center;justify-content:center}
-.btn-line:hover{background:var(--ink);color:#fff}
-.field{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--muted)}
-.field input{height:48px;box-sizing:border-box;background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:0 16px;color:var(--ink);font-family:inherit;font-size:14px;font-weight:500}
 .tab{display:block;width:100%;box-sizing:border-box;border:none;background:none;text-align:left;font-family:inherit;padding:12px 18px;border-radius:999px;font-size:14px;font-weight:600;color:var(--muted);cursor:pointer}
 .tab:hover{color:var(--green)}
 .tab.on{background:var(--tint);color:var(--green)}
-.badge{display:inline-block;padding:5px 14px;border-radius:999px;font-size:12px;font-weight:700}
-.field input.bad{border-color:#C0392B}
-.err{font-size:12px;font-weight:600;color:#C0392B}
-.btn:disabled{opacity:.7;cursor:progress}
-.aform{border:1.5px solid var(--line);border-radius:24px;padding:20px;background:#fff;margin-bottom:16px}
+.aform{border:1.5px solid var(--line);border-radius:14px;padding:20px;background:#fff;margin-bottom:16px}
 .lnk{background:none;border:none;padding:0;font:inherit;font-weight:700;color:var(--ink);cursor:pointer}
 .lnk:hover{color:var(--green)}
-.confirm{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;margin-top:12px;font-size:13px;font-weight:600;color:#C0392B}
+.confirm{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;margin-top:12px;font-size:13px;font-weight:600;color:var(--danger)}
 @media (max-width:900px){
 .split{gap:20px!important}
 .split>.split-main{flex:1 1 100%!important;min-width:0!important}
@@ -292,7 +276,7 @@ button{font-family:inherit;cursor:pointer}
 @media (max-width:600px){
 .wrap{padding-left:16px!important;padding-right:16px!important}
 .ph1{font-size:30px!important;letter-spacing:-.5px!important;margin:16px 0 20px!important}
-.card{border-radius:24px!important}
+.card{border-radius:14px!important}
 .pad{padding:20px!important}
 .pside .tab{flex:1 1 calc(50% - 4px)}
 .aform{padding:16px!important;border-radius:20px!important}

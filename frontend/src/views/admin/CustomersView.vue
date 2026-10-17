@@ -7,7 +7,7 @@
 
   <div v-if="error" class="errbox" role="alert"><span>{{ error }}</span><button type="button" @click="load">Retry</button></div>
 
-  <div class="card" style="border-radius:30px;padding:16px 26px">
+  <div class="card" style="border-radius:18px;padding:16px 26px">
     <div style="overflow-x:auto">
     <table class="rt" style="width:100%;border-collapse:collapse;min-width:860px">
       <thead><tr><th>CUSTOMER</th><th>PHONE</th><th>CITY</th><th>JOINED</th><th>ORDERS</th><th>TOTAL SPENT</th><th>STATUS</th></tr></thead>
@@ -18,7 +18,7 @@
           <td data-label="Orders" style="font-weight:700">{{ c.orders_count }}</td>
           <td data-label="Total Spent" style="font-weight:700">{{ inrp(c.total_spent_paise) }}</td>
           <td data-label="Status">
-            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span class="badge" :style="c.is_active ? 'background:#EAF3DD;color:#0B5D1E' : 'background:#EDEDE4;color:#3b4a3f'">{{ c.is_active ? 'Active' : 'Inactive' }}</span><button class="ghost" :disabled="c.busy" :aria-label="(c.is_active ? 'Deactivate ' : 'Activate ') + c.name" @click="toggle(c)">{{ c.is_active ? 'Deactivate' : 'Activate' }}</button></div>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span class="badge" :style="c.is_active ? 'background:#E8F3E4;color:#103D2C' : 'background:#EDEDE4;color:#3b4a3f'">{{ c.is_active ? 'Active' : 'Inactive' }}</span><button class="ghost" :disabled="c.busy" :aria-label="(c.is_active ? 'Deactivate ' : 'Activate ') + c.name" @click="toggle(c)">{{ c.is_active ? 'Deactivate' : 'Activate' }}</button></div>
             <div v-if="c.err" class="err" role="alert" style="margin-top:4px">{{ c.err }}</div>
           </td>
         </tr>

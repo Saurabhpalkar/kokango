@@ -23,8 +23,17 @@ return [
         ],
     ],
 
+    // Cash on Delivery. max_paise = 0 means no upper limit.
+    'cod' => [
+        'enabled' => (bool) env('COD_ENABLED', true),
+        'max_paise' => (int) env('COD_MAX_PAISE', 0),
+    ],
+
     'low_stock_threshold' => 10,
 
     'max_cart_qty' => 20,
+
+    // API requests per minute per guest IP (signed-in users get twice this).
+    'rate_limit_per_minute' => (int) env('API_RATE_LIMIT', 120),
 
 ];

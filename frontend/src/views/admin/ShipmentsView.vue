@@ -10,7 +10,7 @@
   <div v-if="error" class="errbox" role="alert"><span>{{ error }}</span><button type="button" @click="load">Retry</button></div>
   <div v-if="notice" class="banner">{{ notice }}</div>
 
-  <div class="card" style="border-radius:30px;padding:16px 26px">
+  <div class="card" style="border-radius:18px;padding:16px 26px">
     <div style="overflow-x:auto">
     <table class="rt" style="width:100%;border-collapse:collapse;min-width:900px">
       <thead><tr><th>ORDER</th><th>CUSTOMER</th><th>COURIER</th><th>AWB</th><th>STATUS</th><th>UPDATE STATUS</th><th></th></tr></thead>

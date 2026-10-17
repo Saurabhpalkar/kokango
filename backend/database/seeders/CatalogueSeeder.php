@@ -10,6 +10,25 @@ use Illuminate\Support\Str;
 
 class CatalogueSeeder extends Seeder
 {
+    /** Ingredients and how-to-use text per product (keyed by image / slug). */
+    private const DETAILS = [
+        'jackfruit-chips' => ['ingredients' => 'Raw jackfruit (85%), coconut oil, salt.', 'how_to_use' => "Enjoy straight from the pack with tea or coffee.
+Reseal the pouch after opening to keep the chips crisp."],
+        'jamun-vadi' => ['ingredients' => 'Jamun pulp (70%), sugar, black salt, cumin.', 'how_to_use' => "Eat a piece or two after meals as a digestive treat.
+Store in a cool, dry place and keep the pack sealed."],
+        'moringa-powder' => ['ingredients' => '100% shade-dried moringa (drumstick) leaves.', 'how_to_use' => "Mix 1 teaspoon into smoothies, juice or warm water.
+Sprinkle over soups, dal or add to roti dough.
+Use once a day."],
+        'curry-leaf-powder' => ['ingredients' => 'Curry leaves (80%), roasted urad dal, dry red chilli, salt.', 'how_to_use' => "Mix with hot rice and a spoon of ghee.
+Sprinkle over idli, dosa, upma or buttermilk."],
+        'tulsi-powder' => ['ingredients' => '100% dried holy basil (tulsi) leaves.', 'how_to_use' => "Stir half a teaspoon into warm water or herbal tea.
+Add a little honey if you like."],
+        'neem-powder' => ['ingredients' => '100% sun-dried neem leaves.', 'how_to_use' => "Mix a pinch with warm water, as advised by your doctor.
+For external use, make a paste with water or rose water."],
+        'beetroot-powder' => ['ingredients' => '100% dried beetroot.', 'how_to_use' => "Add 1 teaspoon to juices, smoothies or lassi.
+Use as a natural colour in batters, rotis and baking."],
+    ];
+
     public function run(): void
     {
         $categories = [];
@@ -53,11 +72,22 @@ class CatalogueSeeder extends Seeder
                     'name' => $name,
                     'hindi_name' => $hindi,
                     'description' => $description,
-                    'image' => '/images/'.$image.'.png',
+                    'image' => '/images/products/'.$image.'.jpg',
                     'badge' => $badge,
                     'is_active' => true,
-                ]
+                ] + (self::DETAILS[$image] ?? [])
             );
+
+            // Older seeded rows: move to the new photos and fill the details, but never overwrite an admin's edits.
+            if ($product->image === '/images/'.$image.'.png') {
+                $product->image = '/images/products/'.$image.'.jpg';
+            }
+            foreach (self::DETAILS[$image] ?? [] as $field => $text) {
+                if ($product->{$field} === null) {
+                    $product->{$field} = $text;
+                }
+            }
+            $product->save();
 
             foreach ($variants as [$size, $price, $mrp, $stock]) {
                 ProductVariant::firstOrCreate(

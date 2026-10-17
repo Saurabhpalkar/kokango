@@ -61,17 +61,22 @@ class OrderController extends Controller
         if ($status === 'cancelled') {
             $order = $this->orders->cancel($order);
         } else {
-            DB::transaction(function () use ($order, $status) {
+            $before = null;
+            DB::transaction(function () use ($order, $status, &$before) {
                 $o = Order::whereKey($order->id)->lockForUpdate()->firstOrFail();
                 if ($o->status === 'cancelled') {
                     abort(409, 'A cancelled order cannot be changed.');
                 }
-                // Fulfilment states only make sense for money received (a failed/refunded order can still go back to "pending").
-                if ($status !== 'pending' && $o->payment_status !== 'paid') {
+                // Fulfilment states only make sense for money received, or for Cash on Delivery orders
+                // (a failed/refunded order can still go back to "pending").
+                if ($status !== 'pending' && $o->payment_status !== 'paid' && ! $o->isCod()) {
                     abort(409, 'This order has not been paid, so it cannot be moved to "'.$status.'".');
                 }
+                $before = $o->status;
                 $o->forceFill(['status' => $status])->save();
             });
+            $order = $order->fresh();
+            $this->orders->afterStatusChange($order, $before);
             $order = $order->fresh();
         }
 

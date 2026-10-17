@@ -216,8 +216,18 @@ if (!/^APP_KEY=.+$/m.test(envText)) {
 } else {
   info('APP_KEY already set');
 }
+// Uploaded images live in storage/app/public and are served through the public/storage link.
+const linkPath = path.join(backend, 'public', 'storage');
+const isLink = () => { try { return fs.lstatSync(linkPath).isSymbolicLink() } catch (e) { return false } }
+if (has('public', 'storage') && !isLink() && fs.readdirSync(linkPath).length === 0) {
+  fs.rmdirSync(linkPath); // an empty plain folder (e.g. from a zip copy) would hide every uploaded image
+}
 if (!has('public', 'storage')) {
   php(['artisan', 'storage:link'], backend, { allowFail: true });
+  // Windows without Developer Mode cannot create symlinks; a directory junction needs no special rights.
+  if (!has('public', 'storage') && process.platform === 'win32') {
+    spawnSync('cmd', ['/c', 'mklink', '/J', linkPath, path.join(backend, 'storage', 'app', 'public')], { stdio: 'inherit' });
+  }
 } else {
   info('public/storage link already exists');
 }

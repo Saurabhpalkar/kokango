@@ -4,14 +4,14 @@
     <div><h1>{{ isNew ? 'Add product' : 'Edit product' }}</h1><div class="sub"><RouterLink to="/admin/products" style="color:var(--green);font-weight:700">&larr; Back to products</RouterLink></div></div>
   </div>
 
-  <div v-if="loading" class="card state" style="border-radius:30px">Loading product&hellip;</div>
+  <div v-if="loading" class="card state" style="border-radius:18px">Loading product&hellip;</div>
 
-  <div v-else-if="notFound" class="card" style="border-radius:30px;padding:28px">
+  <div v-else-if="notFound" class="card" style="border-radius:18px;padding:28px">
     {{ loadError }} <RouterLink to="/admin/products" style="color:var(--green);font-weight:700">Back to products</RouterLink>
   </div>
 
   <form v-else novalidate @submit.prevent="save" style="display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start">
-    <section class="card" style="flex:2 1 520px;border-radius:30px;padding:28px;box-sizing:border-box;min-width:0">
+    <section class="card" style="flex:2 1 520px;border-radius:18px;padding:28px;box-sizing:border-box;min-width:0">
       <div v-if="err" class="errbox" role="alert" style="margin-bottom:16px"><span>{{ err }}</span></div>
       <div class="grid">
         <div><label class="lbl" for="pn">NAME</label><input id="pn" class="in" v-model="f.name"><span v-if="errors.name" class="err">{{ errors.name }}</span></div>
@@ -19,6 +19,8 @@
         <div><label class="lbl" for="pc">CATEGORY</label><select id="pc" v-model="f.category_id"><option v-for="c in categories" :key="c.id" :value="c.id">{{ c.name }}{{ c.is_active ? '' : ' (inactive)' }}</option></select><span v-if="errors.category_id" class="err">{{ errors.category_id }}</span></div>
         <div><label class="lbl" for="pb">BADGE</label><input id="pb" class="in" v-model="f.badge" placeholder="e.g. Bestseller" maxlength="20"><span v-if="errors.badge" class="err">{{ errors.badge }}</span></div>
         <div style="grid-column:1/-1"><label class="lbl" for="pd">DESCRIPTION</label><textarea id="pd" class="in" rows="4" v-model="f.description"></textarea><span v-if="errors.description" class="err">{{ errors.description }}</span></div>
+        <div style="grid-column:1/-1"><label class="lbl" for="pi">INGREDIENTS</label><textarea id="pi" class="in" rows="2" v-model="f.ingredients" placeholder="e.g. 100% shade-dried moringa leaves"></textarea><span v-if="errors.ingredients" class="err">{{ errors.ingredients }}</span></div>
+        <div style="grid-column:1/-1"><label class="lbl" for="pu">HOW TO USE <span style="font-weight:500;text-transform:none">(one step per line)</span></label><textarea id="pu" class="in" rows="3" v-model="f.how_to_use"></textarea><span v-if="errors.how_to_use" class="err">{{ errors.how_to_use }}</span></div>
         <div style="grid-column:1/-1;display:flex;align-items:center;gap:12px">
           <input id="pa" type="checkbox" v-model="f.is_active" style="width:20px;height:20px;accent-color:var(--green)">
           <label for="pa" style="font-size:14px;font-weight:600">Active (visible in the store)</label>
@@ -52,9 +54,9 @@
       </div>
     </section>
 
-    <aside class="card" style="flex:1 1 300px;border-radius:30px;padding:28px;box-sizing:border-box">
+    <aside class="card" style="flex:1 1 300px;border-radius:18px;padding:28px;box-sizing:border-box">
       <div class="lbl">IMAGE</div>
-      <div style="height:200px;border-radius:20px;background:var(--tint);display:flex;align-items:center;justify-content:center;overflow:hidden;margin-bottom:16px"><img v-if="preview" :src="preview" alt="Product preview" style="height:100%;width:auto;max-width:100%;object-fit:contain"><span v-else style="color:var(--muted);font-size:13px">No image</span></div>
+      <div style="height:200px;border-radius:14px;background:var(--tint);display:flex;align-items:center;justify-content:center;overflow:hidden;margin-bottom:16px"><img v-if="preview" :src="preview" alt="Product preview" style="height:100%;width:auto;max-width:100%;object-fit:contain"><span v-else style="color:var(--muted);font-size:13px">No image</span></div>
       <label class="lbl" for="pf">UPLOAD IMAGE</label>
       <input id="pf" ref="fileEl" type="file" accept="image/png,image/jpeg,image/webp" class="in" style="height:auto;padding:10px 12px;font-weight:500" @change="onFile">
       <div style="font-size:12px;color:var(--muted);margin:6px 0 0">JPG, PNG or WebP, up to 2 MB. Uploaded when you save.</div>
@@ -84,7 +86,7 @@ const images = ['jackfruit-chips.png', 'jamun-vadi.png', 'moringa-powder.png', '
 
 let keySeq = 0
 const blankVariant = () => ({ key: ++keySeq, id: null, size_label: '', sku: '', price: '', mrp: '', stock: 0, is_active: true })
-const f = reactive({ name: '', hindi_name: '', category_id: null, description: '', badge: '', is_active: true, image_url: '', variants: [blankVariant()] })
+const f = reactive({ name: '', hindi_name: '', category_id: null, description: '', ingredients: '', how_to_use: '', badge: '', is_active: true, image_url: '', variants: [blankVariant()] })
 const categories = ref([])
 const loading = ref(true)
 const notFound = ref(false)
@@ -116,11 +118,11 @@ async function init() {
   try {
     categories.value = await adminCategories.list()
     if (isNew.value) {
-      Object.assign(f, { name: '', hindi_name: '', category_id: categories.value[0]?.id ?? null, description: '', badge: '', is_active: true, image_url: '', variants: [blankVariant()] })
+      Object.assign(f, { name: '', hindi_name: '', category_id: categories.value[0]?.id ?? null, description: '', ingredients: '', how_to_use: '', badge: '', is_active: true, image_url: '', variants: [blankVariant()] })
     } else {
       const p = await adminProducts.get(route.params.id)
       Object.assign(f, {
-        name: p.name, hindi_name: p.hindi_name || '', category_id: p.category?.id ?? categories.value[0]?.id ?? null, description: p.description || '', badge: p.badge || '', is_active: !!p.is_active, image_url: p.image_url || '',
+        name: p.name, hindi_name: p.hindi_name || '', category_id: p.category?.id ?? categories.value[0]?.id ?? null, description: p.description || '', ingredients: p.ingredients || '', how_to_use: p.how_to_use || '', badge: p.badge || '', is_active: !!p.is_active, image_url: p.image_url || '',
         variants: p.variants.length ? p.variants.map((v) => ({ key: ++keySeq, id: v.id, size_label: v.size_label, sku: v.sku, price: rupees(v.price_paise), mrp: rupees(v.mrp_paise), stock: v.stock, is_active: !!v.is_active })) : [blankVariant()],
       })
     }
@@ -151,7 +153,7 @@ function validate() {
 
 function payload() {
   return {
-    name: f.name.trim(), hindi_name: f.hindi_name.trim() || null, category_id: f.category_id, description: f.description.trim() || null, badge: f.badge.trim() || null, is_active: f.is_active, image_url: f.image_url || null,
+    name: f.name.trim(), hindi_name: f.hindi_name.trim() || null, category_id: f.category_id, description: f.description.trim() || null, ingredients: f.ingredients.trim() || null, how_to_use: f.how_to_use.trim() || null, badge: f.badge.trim() || null, is_active: f.is_active, image_url: f.image_url || null,
     variants: f.variants.map((v) => ({
       ...(v.id ? { id: v.id } : {}), sku: v.sku.trim(), size_label: v.size_label.trim(), price_paise: rupeesToPaise(v.price),
       mrp_paise: v.mrp === '' || v.mrp === null ? null : rupeesToPaise(v.mrp), stock: Number(v.stock), is_active: v.is_active,
@@ -197,7 +199,7 @@ onBeforeUnmount(() => setFile(null))
 <style scoped>
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
 .grid .err{display:block;margin-top:4px}
-.vrow{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;background:var(--bg);border:1px solid var(--line);border-radius:20px;padding:14px;align-items:start}
+.vrow{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:14px;align-items:start}
 .vrow .err{display:block;margin-top:4px}
 .vrow :deep(input.in){background:#fff}
 .vend{grid-column:1/-1;display:flex;gap:12px;justify-content:space-between;align-items:center}

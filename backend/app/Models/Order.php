@@ -44,6 +44,17 @@ class Order extends Model
         return $this->hasOne(Payment::class)->latestOfMany();
     }
 
+    /** True when the customer chose Cash on Delivery (the payment record's gateway is "cod"). */
+    public function isCod(): bool
+    {
+        return Payment::where('order_id', $this->id)->where('gateway', 'cod')->exists();
+    }
+
+    public function vendorOrders(): HasMany
+    {
+        return $this->hasMany(VendorOrder::class);
+    }
+
     public function shipments(): HasMany
     {
         return $this->hasMany(Shipment::class);

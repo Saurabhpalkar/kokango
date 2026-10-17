@@ -12,3 +12,8 @@ backend/database/database.sqlite
 
 .env-bkc
 *.env-bkc
+
+# local backups (not part of the project)
+backend.zip
+frontend/src.zip
+frontend/src-bkc/

@@ -259,7 +259,7 @@ class AuthAndCatalogueTest extends TestCase
         $v = $this->seedCatalogue();
 
         $cart = $this->client()->getJson(self::API.'/cart')
-            ->assertOk()
+            ->assertCreated()
             ->assertJsonPath('data.count', 0)
             ->assertJsonPath('data.shipping_paise', 0);
         $token = $cart->json('data.token');
@@ -322,7 +322,7 @@ class AuthAndCatalogueTest extends TestCase
 
         // The user already has 2 of the 50g pack.
         $this->client($userToken)->postJson(self::API.'/cart/items', ['variant_id' => $v['moringa50']->id, 'qty' => 2])
-            ->assertOk();
+            ->assertSuccessful();
 
         // Guest cart: 3 of the same pack + 1 jackfruit chips.
         $guest = $this->client()->getJson(self::API.'/cart')->json('data.token');

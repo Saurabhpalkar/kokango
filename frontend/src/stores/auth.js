@@ -16,7 +16,11 @@ export const useAuthStore = defineStore('auth', {
     async init() {
       if (this.ready) return
       if (this.token) {
-        try { this.user = (await api.get('/auth/me')).data.data } catch (e) { this.token = null; this.user = null; setToken(null) }
+        try { this.user = (await api.get('/auth/me')).data.data } catch (e) {
+          this.user = null
+          // Only a rejected token ends the session; a network blip, 429 or 5xx keeps it and retries on the next page.
+          if (e?.response?.status === 401 || e?.response?.status === 403) { this.token = null; setToken(null) } else return
+        }
       }
       this.ready = true
     },

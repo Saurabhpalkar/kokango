@@ -9,6 +9,9 @@ use App\Http\Requests\Checkout\QuoteRequest;
 use App\Http\Resources\OrderResource;
 use App\Services\CartService;
 use App\Services\CheckoutService;
+use App\Services\MarketplaceService;
+use App\Services\OrderNotifier;
+use App\Services\OrderService;
 use Illuminate\Http\JsonResponse;
 
 class CheckoutController extends Controller
@@ -18,6 +21,9 @@ class CheckoutController extends Controller
     public function __construct(
         private CartService $carts,
         private CheckoutService $checkout,
+        private OrderService $orders,
+        private OrderNotifier $notifier,
+        private MarketplaceService $marketplace,
     ) {
     }
 
@@ -35,6 +41,13 @@ class CheckoutController extends Controller
         $cart = $this->carts->resolve($request);
 
         $result = $this->checkout->placeOrder($request->validated(), $cart, $this->viewer());
+
+        // Cash on Delivery is complete at once: empty the cart and tell the customer and the shop owner.
+        if ($result['payment']['gateway'] === 'cod') {
+            $this->orders->clearCart($result['order'], (string) $request->header('X-Cart-Token', ''));
+            $this->marketplace->syncOrder($result['order']);
+            $this->notifier->placed($result['order']);
+        }
 
         return response()->json([
             'data' => [

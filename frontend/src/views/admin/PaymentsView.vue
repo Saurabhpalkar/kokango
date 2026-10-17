@@ -3,7 +3,7 @@
   <div class="hd"><div><h1>Payments</h1><div class="sub">{{ meta ? meta.total : 0 }} {{ filter === 'all' ? 'transactions' : filter + ' transactions' }}</div></div></div>
 
   <div class="statgrid" style="margin-bottom:24px">
-    <div v-for="s in summary" :key="s.label" class="card stat" :style="`border-radius:26px;padding:22px;box-sizing:border-box;border-top:4px solid ${s.accent}`">
+    <div v-for="s in summary" :key="s.label" class="card stat" :style="`border-radius:18px;padding:22px;box-sizing:border-box;border-top:4px solid ${s.accent}`">
       <div style="font-size:13px;font-weight:600;color:var(--muted)">{{ s.label }}</div>
       <div style="font-size:30px;font-weight:800;margin-top:8px">{{ s.value }}</div>
     </div>
@@ -16,7 +16,7 @@
   <div v-if="error" class="errbox" role="alert"><span>{{ error }}</span><button type="button" @click="load">Retry</button></div>
   <div v-if="notice" class="banner">{{ notice }}</div>
 
-  <div class="card" style="border-radius:30px;padding:16px 26px">
+  <div class="card" style="border-radius:18px;padding:16px 26px">
     <div style="overflow-x:auto">
     <table class="rt" style="width:100%;border-collapse:collapse;min-width:860px">
       <thead><tr><th>PAYMENT ID</th><th>ORDER</th><th>CUSTOMER</th><th>DATE</th><th>AMOUNT</th><th>METHOD</th><th>STATUS</th><th></th></tr></thead>
@@ -30,7 +30,7 @@
           <td data-label="Status"><span class="badge" :style="paymentPill(p.status)">{{ label(p.status) }}</span></td>
           <td data-label="">
             <div v-if="p.status === 'paid'">
-              <div v-if="confirmId === p.id" style="display:flex;gap:8px;align-items:center"><span style="font-size:13px;font-weight:600;color:#B3261E">Refund?</span><button class="ghost danger" :disabled="busy" @click="refund(p)">Yes</button><button class="ghost" @click="confirmId = null">No</button></div>
+              <div v-if="confirmId === p.id" style="display:flex;gap:8px;align-items:center"><span style="font-size:13px;font-weight:600;color:var(--danger)">Refund?</span><button class="ghost danger" :disabled="busy" @click="refund(p)">Yes</button><button class="ghost" @click="confirmId = null">No</button></div>
               <button v-else class="ghost" @click="confirmId = p.id">Refund</button>
             </div>
             <div v-if="rowErr[p.id]" class="err" role="alert" style="margin-top:4px">{{ rowErr[p.id] }}</div>
@@ -72,10 +72,10 @@ const filters = [{ key: 'all', label: 'All' }, { key: 'paid', label: 'Paid' }, {
 const summary = computed(() => {
   const s = meta.value?.summary || {}
   return [
-    { label: 'Collected', value: inrp(s.collected_paise), accent: '#0B5D1E' },
-    { label: 'Failed', value: inrp(s.failed_paise), accent: '#D9534F' },
-    { label: 'Refunded', value: inrp(s.refunded_paise), accent: '#FFB400' },
-    { label: 'Transactions', value: String(s.transactions ?? 0), accent: '#9ACD32' },
+    { label: 'Collected', value: inrp(s.collected_paise), accent: '#103D2C' },
+    { label: 'Failed', value: inrp(s.failed_paise), accent: 'var(--danger)' },
+    { label: 'Refunded', value: inrp(s.refunded_paise), accent: '#FEBC04' },
+    { label: 'Transactions', value: String(s.transactions ?? 0), accent: '#379237' },
   ]
 })
 

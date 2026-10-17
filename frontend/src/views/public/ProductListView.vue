@@ -1,57 +1,85 @@
 <template>
 <div class="dcroot">
-<div style="width:100%;position:relative;overflow:hidden;background:var(--bg)">
   <AnnouncementBar />
-  <div style="position:absolute;top:-220px;right:-160px;width:520px;height:520px;border-radius:50%;background:var(--sun)"></div>
-  <div style="position:absolute;top:640px;left:-260px;width:480px;height:480px;border-radius:50%;background:var(--tint)"></div>
-  <div class="wrap" style="position:relative;max-width:1280px;margin:0 auto;padding:0 32px;box-sizing:border-box">
+  <SiteHeader active="products" search />
 
-    <SiteHeader active="products" search />
-
-    <div class="ph" style="padding:32px 0 8px"><h1 style="margin:0;font-size:clamp(32px,8vw,48px);font-weight:800;letter-spacing:-1.5px">All Products</h1><p style="margin:10px 0 0;font-size:16px;color:var(--muted)">Konkan snacks and herbal powders, packed fresh.</p></div>
-
-    <section class="plist" style="display:flex;flex-wrap:wrap;gap:32px;align-items:flex-start;margin-top:32px">
-      <aside class="card pside" style="flex:0 0 260px;border-radius:32px;padding:28px;box-sizing:border-box">
-        <div style="font-size:15px;font-weight:800;margin-bottom:14px">Category</div>
-        <div style="display:flex;flex-direction:column;gap:14px;font-size:14px;font-weight:500">
-          <template v-for="c in catOptions" :key="c.slug">
-            <label style="display:flex;gap:10px;align-items:center"><input type="checkbox" :checked="category === c.slug" @change="setCategory(c.slug)" style="accent-color:#0B5D1E;width:18px;height:18px">{{ c.label }}</label>
-          </template>
-        </div>
-        <div style="font-size:15px;font-weight:800;margin:28px 0 14px">Price</div>
-        <input type="range" :min="PRICE_MIN" :max="PRICE_MAX" step="10" v-model.number="maxPrice" aria-label="Maximum price" style="width:100%;accent-color:#0B5D1E">
-        <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted);font-weight:600"><span>&#8377; 100</span><span>&#8377; 400</span></div>
-      </aside>
-
-      <div class="pmain" style="flex:1 1 640px;min-width:0">
-        <div class="ptools" style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:16px;margin-bottom:24px">
-          <div style="display:flex;gap:10px;flex-wrap:wrap"><template v-for="c in chipOptions" :key="c.slug"><button type="button" class="chip" :class="{ on: category === c.slug }" @click="setCategory(c.slug, true)">{{ c.label }}</button></template></div>
-          <div class="pfilters" style="display:flex;flex-wrap:wrap;align-items:center;gap:16px">
-            <label class="slabel" style="display:flex;align-items:center"><span style="position:absolute;left:-9999px">Search products</span><input ref="searchEl" v-model="query" type="search" placeholder="Search products" class="searchbox"></label>
-            <label style="display:flex;align-items:center;gap:10px;font-size:13px;font-weight:600;color:var(--muted)">Sort by<select v-model="sort"><option value="newest">Newest</option><option value="asc">Price: low to high</option><option value="desc">Price: high to low</option></select></label>
-          </div>
-        </div>
-        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(min(250px,100%),1fr));gap:24px">
-          <div v-if="loading && !visible.length" class="card" style="grid-column:1/-1;border-radius:32px;padding:48px 24px;text-align:center;box-sizing:border-box;color:var(--muted)">Loading products...</div>
-          <template v-for="p in visible" :key="p.id">
-            <div class="card" style="border-radius:32px;padding:16px;box-sizing:border-box">
-              <a :href="`/product/${p.slug}`" class="pimg" style="display:flex;justify-content:center;height:230px;border-radius:24px;background:linear-gradient(160deg,#fff,var(--tint));overflow:hidden"><img :src="p.image_url" :alt="`${p.name} pack`" style="height:100%;width:auto;object-fit:contain"></a>
-              <h3 style="margin:16px 6px 2px;font-size:18px;font-weight:700">{{ p.name }}</h3>
-              <div style="margin:0 6px;font-size:13px;color:var(--muted)">{{ p.hindi_name }} &middot; {{ sizeText(p) }}</div>
-              <div style="display:flex;justify-content:space-between;align-items:center;margin:14px 6px 4px"><span style="font-size:20px;font-weight:800;color:var(--green)">{{ inrp(p.min_price_paise) }}</span><button type="button" class="icon" @click.prevent="addToCart(p)" :aria-label="`Add ${p.name} to cart`" style="background:var(--mango);border-color:var(--mango)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8h12l-1 12H7L6 8z"/><path d="M9 8V6a3 3 0 016 0v2"/></svg></button></div>
-            </div>
-          </template>
-        </div>
-        <div v-if="error" class="card" style="border-radius:32px;padding:48px 24px;text-align:center;box-sizing:border-box"><div style="font-size:18px;font-weight:700">We could not load the products</div><p role="alert" style="margin:10px 0 0;font-size:14px;color:var(--muted)">{{ error }}</p><button type="button" class="btn" @click="fetchPage(1)" style="margin-top:18px">Try again</button></div>
-        <div v-else-if="!loading && !visible.length" class="card" style="border-radius:32px;padding:48px 24px;text-align:center;box-sizing:border-box"><div style="font-size:18px;font-weight:700">No products match your filters</div><button type="button" class="btn" @click="clearFilters" style="margin-top:18px">Clear filters</button></div>
-        <div v-if="hasMore" style="text-align:center;margin-top:28px"><button type="button" class="btn" :disabled="loading" @click="fetchPage(page + 1)">{{ loading ? 'Loading...' : 'Load more' }}</button></div>
-      </div>
+  <main>
+    <!-- compact page title -->
+    <section class="phead wrap">
+      <nav class="crumbs" aria-label="Breadcrumb">
+        <a href="/">Home</a><span aria-hidden="true">/</span>
+        <template v-if="activeCategory"><a href="/products">Shop</a><span aria-hidden="true">/</span><span aria-current="page">{{ activeCategory.name }}</span></template>
+        <span v-else aria-current="page">Shop</span>
+      </nav>
+      <h1>{{ heading }}</h1>
     </section>
 
-    <SiteFooter />
-  </div>
-</div>
-<WhatsAppFab />
+    <div class="wrap shop">
+      <!-- filters: sidebar on desktop, slide-in drawer on phones -->
+      <aside id="shop-filters" class="side card" :class="{ open: drawer }" aria-label="Filters">
+        <div class="side-head">
+          <h2>Filters</h2>
+          <button type="button" class="icon x" aria-label="Close filters" @click="drawer = false"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+        </div>
+        <div class="grp msort">
+          <label class="lg" for="msort">Sort by</label>
+          <select id="msort" v-model="sort" class="sel"><option value="newest">Newest</option><option value="asc">Price: low to high</option><option value="desc">Price: high to low</option></select>
+        </div>
+        <fieldset class="grp">
+          <legend>Category</legend>
+          <label v-for="c in catOptions" :key="c.slug" class="chk"><input type="checkbox" :checked="category === c.slug" @change="setCategory(c.slug)"><span>{{ c.label }}</span></label>
+        </fieldset>
+        <div class="grp">
+          <label class="lg" for="maxprice">Maximum price: <strong>{{ maxPrice >= PRICE_MAX ? 'Any' : inrp(maxPrice * 100) }}</strong></label>
+          <input id="maxprice" type="range" :min="PRICE_MIN" :max="PRICE_MAX" step="10" v-model.number="maxPrice">
+          <div class="range-l"><span>&#8377; {{ PRICE_MIN }}</span><span>&#8377; {{ PRICE_MAX }}</span></div>
+        </div>
+        <div class="side-foot">
+          <button type="button" class="btn btn-line btn-sm" :disabled="!filtersActive" @click="clearFilters">Clear filters</button>
+          <button type="button" class="btn btn-sm apply" @click="drawer = false">Show {{ total }} {{ total === 1 ? 'product' : 'products' }}</button>
+        </div>
+      </aside>
+      <button v-if="drawer" type="button" class="scrim" aria-label="Close filters" @click="drawer = false"></button>
+
+      <section class="main" aria-label="Products">
+        <div class="bar">
+          <div class="tabs" role="group" aria-label="Quick category filter">
+            <button v-for="c in chipOptions" :key="c.slug" type="button" class="chip" :class="{ on: category === c.slug }" :aria-pressed="category === c.slug ? 'true' : 'false'" @click="setCategory(c.slug, true)">{{ c.label }}</button>
+          </div>
+
+          <div class="tools">
+            <label class="sbox"><span class="sr-only">Search products</span>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+              <input ref="searchEl" v-model="query" type="search" placeholder="Search products" autocomplete="off">
+            </label>
+            <button type="button" class="fbtn" aria-label="Filter and sort" aria-controls="shop-filters" :aria-expanded="drawer ? 'true' : 'false'" @click="drawer = true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"/></svg><span>Filter &amp; sort</span><span v-if="filtersActive || sort !== 'newest'" class="dotn" aria-label="filters applied"></span>
+            </button>
+            <label class="sortl">Sort by
+              <select v-model="sort" class="sel"><option value="newest">Newest</option><option value="asc">Price: low to high</option><option value="desc">Price: high to low</option></select>
+            </label>
+          </div>
+        </div>
+
+        <p class="count" role="status" aria-live="polite">
+          <template v-if="loading && !visible.length">Loading products...</template>
+          <template v-else-if="!error">Showing {{ visible.length }} of {{ total }} {{ total === 1 ? 'product' : 'products' }}<template v-if="query.trim()"> for &ldquo;{{ query.trim() }}&rdquo;</template></template>
+        </p>
+
+        <div v-if="loading && !visible.length" class="pgrid" aria-hidden="true">
+          <div v-for="n in 8" :key="n" class="card sk-card"><div class="skeleton sk-img"></div><div class="skeleton sk-line w70"></div><div class="skeleton sk-line w40"></div></div>
+        </div>
+        <div v-else-if="error" class="card state"><div class="state-t">We could not load the products</div><p role="alert">{{ error }}</p><button type="button" class="btn" @click="fetchPage(1)">Try again</button></div>
+        <div v-else-if="!visible.length" class="card state"><div class="state-t">No products match your filters</div><p>Try a different search or clear the filters.</p><button type="button" class="btn" @click="clearFilters">Clear filters</button></div>
+        <div v-else class="pgrid"><ProductCard v-for="(p, k) in visible" :key="p.id" v-reveal="{ delay: (k % 4) * 70 }" :product="p" /></div>
+
+        <div v-if="hasMore && visible.length" class="more"><button type="button" class="btn btn-line" :disabled="loading" :aria-busy="loading ? 'true' : 'false'" @click="fetchPage(page + 1)">{{ loading ? 'Loading...' : 'Load more products' }}</button></div>
+      </section>
+    </div>
+  </main>
+
+  <SiteFooter />
+  <WhatsAppFab />
 </div>
 </template>
 
@@ -60,18 +88,14 @@ import AnnouncementBar from '@/components/AnnouncementBar.vue'
 import SiteHeader from '@/components/SiteHeader.vue'
 import SiteFooter from '@/components/SiteFooter.vue'
 import WhatsAppFab from '@/components/WhatsAppFab.vue'
-import { useCartStore } from '@/stores/cart'
-
-const cart = useCartStore()
+import ProductCard from '@/components/ProductCard.vue'
 import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
-import { useToastStore } from '@/stores/toast'
 import { inrp } from '@/utils/format'
 import { apiError } from '@/services/api'
 import * as catalogue from '@/services/catalogueService'
 
 const route = useRoute()
-const toast = useToastStore()
 const PRICE_MIN = 100
 const PRICE_MAX = 400
 const PER_PAGE = 24
@@ -84,16 +108,27 @@ const fromRoute = () => (typeof route.query.category === 'string' ? route.query.
 const category = ref(fromRoute())
 const maxPrice = ref(PRICE_MAX)
 const sort = ref('newest')
-const query = ref('')
+const query = ref(typeof route.query.search === 'string' ? route.query.search : '')
 const searchEl = ref(null)
+const drawer = ref(false)
+
+const activeCategory = computed(() => cats.value.find((c) => c.slug === category.value) || null)
+const heading = computed(() => (activeCategory.value ? activeCategory.value.name : 'All Products'))
+const filtersActive = computed(() => !!category.value || maxPrice.value < PRICE_MAX || !!query.value.trim())
 
 const setCategory = (slug, fromChip) => { category.value = (!fromChip && slug && category.value === slug) ? '' : slug }
 watch(() => route.query.category, () => { category.value = fromRoute() })
+watch(() => route.query.search, (v) => { query.value = typeof v === 'string' ? v : '' })
 const focusSearch = async () => { if (route.query.focus === 'search') { await nextTick(); searchEl.value && searchEl.value.focus() } }
 watch(() => route.query.focus, focusSearch)
 
-// ---- server-side filtering, sorting and search
+// lock the page behind the filter drawer, release it on close or leave
+watch(drawer, (open) => { document.body.style.overflow = open ? 'hidden' : '' })
+const onKey = (e) => { if (e.key === 'Escape') drawer.value = false }
+
+// ---- server-side filtering, sorting and search (same API parameters as before)
 const visible = ref([])
+const total = ref(0)
 const page = ref(1)
 const lastPage = ref(1)
 const loading = ref(true)
@@ -111,65 +146,105 @@ async function fetchPage(n) {
     const { items, meta } = await catalogue.products(params)
     if (my !== seq) return
     visible.value = n === 1 ? items : [...visible.value, ...items]
+    total.value = meta.total ?? visible.value.length
     page.value = meta.current_page || n
     lastPage.value = meta.last_page || 1
   } catch (e) {
     if (my !== seq) return
     error.value = apiError(e).message
-    if (n === 1) visible.value = []
+    if (n === 1) { visible.value = []; total.value = 0 }
   } finally { if (my === seq) loading.value = false }
 }
 let timer = null
 watch([category, maxPrice, sort, query], () => { clearTimeout(timer); timer = setTimeout(() => fetchPage(1), 250) })
-onBeforeUnmount(() => clearTimeout(timer))
+onBeforeUnmount(() => { clearTimeout(timer); document.body.style.overflow = ''; document.removeEventListener('keydown', onKey) })
 onMounted(async () => {
+  document.addEventListener('keydown', onKey)
   focusSearch()
-  catalogue.categories().then((c) => { cats.value = c }).catch(() => {})
+  catalogue.categories().then((c) => { cats.value = c.filter((x) => x.products_count == null || x.products_count > 0) }).catch(() => {})
   fetchPage(1)
 })
 
 const clearFilters = () => { category.value = ''; maxPrice.value = PRICE_MAX; sort.value = 'newest'; query.value = '' }
-const sizeText = (p) => {
-  const v = catalogue.defaultVariant(p)
-  return v ? v.size_label : ''
-}
-const addToCart = async (p) => {
-  const v = catalogue.defaultVariant(p)
-  if (!v || !v.in_stock) { toast.show(`${p.name} is out of stock`); return }
-  if (await cart.add(v.id, 1)) toast.show(`${p.name} added to cart`)
-}
 </script>
 
 <style scoped>
-.dcroot{--bg:#F8F7EF;--surface:#fff;--ink:#14301C;--muted:#566659;--line:#E6E2D0;--green:#0B5D1E;--leaf:#9ACD32;--mango:#FFB400;--amber:#9A5B00;--tint:#EAF3DD;--sun:#FFF1CC}
-.dcroot{margin:0;background:var(--bg);color:var(--ink);font-family:'Plus Jakarta Sans','Noto Sans Devanagari',system-ui,sans-serif}
-a{color:var(--ink);text-decoration:none}a:hover{color:var(--green)}
-button{font-family:inherit;cursor:pointer}
-.card{background:var(--surface);border:1px solid var(--line);box-shadow:0 10px 30px rgba(20,48,28,0.06)}
-.icon{width:44px;height:44px;display:inline-flex;align-items:center;justify-content:center;background:#fff;color:var(--ink);border:1px solid var(--line);border-radius:50%;padding:0;position:relative}
-.icon:hover{border-color:var(--green);color:var(--green)}
-.btn{background:var(--green);color:#fff;border:none;border-radius:999px;padding:12px 28px;font-size:15px;font-weight:600;min-height:44px;display:inline-flex;align-items:center;justify-content:center;gap:8px}
-.btn:hover{background:#08481a;color:#fff}
-.chip{background:#fff;color:var(--ink);border:1.5px solid var(--line);border-radius:999px;padding:8px 18px;font-size:13px;font-weight:600;min-height:40px}
-.chip.on{border-color:var(--green);color:var(--green);background:var(--tint)}
-.searchbox{height:44px;width:200px;box-sizing:border-box;background:#fff;border:1px solid var(--line);border-radius:999px;color:var(--ink);padding:0 18px;font-family:inherit;font-size:14px;font-weight:500}
-.btn:disabled{opacity:.7;cursor:progress}
-select{height:44px;background:#fff;border:1px solid var(--line);border-radius:999px;color:var(--ink);padding:0 16px;font-family:inherit;font-size:14px;font-weight:600}
+/* compact title */
+.phead { padding-top: 22px; }
+.crumbs { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; font-size: 13px; color: var(--muted); }
+.crumbs a { color: var(--muted); display: inline-flex; align-items: center; min-height: 28px; }
+.crumbs a:hover { color: var(--forest); }
+.crumbs [aria-current] { color: var(--ink); font-weight: 600; }
+.phead h1 { margin: 4px 0 0; font-size: clamp(26px, 3.6vw, 38px); font-weight: 800; letter-spacing: -.8px; line-height: 1.15; }
 
-/* ---- responsive ---- */
-img{max-width:100%}
-@media (max-width:600px){.wrap{padding-left:16px!important;padding-right:16px!important}}
+/* layout */
+.shop { display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 32px; align-items: start; padding-top: 20px; padding-bottom: 56px; }
+.side { position: sticky; top: 130px; padding: 22px; display: flex; flex-direction: column; gap: 22px; }
+.side-head { display: flex; align-items: center; justify-content: space-between; }
+.side-head h2 { margin: 0; font-size: 18px; font-weight: 800; }
+.x, .scrim, .apply, .msort { display: none; }
+.grp { border: 0; margin: 0; padding: 0; min-width: 0; }
+.grp legend, .lg { padding: 0; margin: 0 0 12px; display: block; font-size: 14px; font-weight: 800; }
+.lg strong { color: var(--forest); }
+.chk { display: flex; align-items: center; gap: 10px; min-height: 40px; font-size: 14px; font-weight: 500; cursor: pointer; }
+.chk input { width: 18px; height: 18px; accent-color: var(--forest); flex: none; }
+input[type="range"] { width: 100%; accent-color: var(--forest); }
+.range-l { display: flex; justify-content: space-between; font-size: 12px; font-weight: 600; color: var(--muted); }
+.side-foot { display: flex; gap: 10px; }
+.side-foot .btn { flex: 1; }
 
-.pmain,.pside{min-width:0}
-@media (max-width:900px){.pside{flex:1 1 100%!important}}
-@media (max-width:600px){
-  .ph{padding-top:20px!important}
-  .plist{gap:20px!important;margin-top:20px!important}
-  .pside{padding:20px!important;border-radius:28px!important}
-  .pfilters,.slabel{width:100%}
-  .pfilters{gap:12px!important}
-  .searchbox{width:100%!important}
-  .pfilters>label:last-child{justify-content:space-between;width:100%}
-  .chip{min-height:40px}
+.main { min-width: 0; }
+.bar { display: flex; flex-direction: column; gap: 12px; }
+.tabs { display: flex; gap: 8px; overflow-x: auto; padding: 2px; margin: 0 -2px; scrollbar-width: none; }
+.tabs::-webkit-scrollbar { display: none; }
+.tabs .chip { flex: none; }
+.tools { display: flex; align-items: center; gap: 12px; }
+.sbox { flex: 1 1 auto; max-width: 380px; display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 16px; background: #fff; border: 1px solid #CFCBB6; border-radius: 999px; color: var(--muted); transition: border-color .2s, box-shadow .2s; }
+.sbox:focus-within { border-color: var(--forest); box-shadow: 0 0 0 3px rgba(55, 146, 55, .28); }
+.sbox input { flex: 1; min-width: 0; border: 0; outline: none; background: transparent; font-size: 14px; font-weight: 500; color: var(--ink); height: 42px; }
+.fbtn { display: none; position: relative; flex: none; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px; border-radius: 999px; border: 1px solid var(--forest); background: var(--forest); color: #fff; font-size: 14px; font-weight: 700; }
+.dotn { width: 9px; height: 9px; border-radius: 50%; background: var(--mango); position: absolute; top: 4px; right: 6px; border: 2px solid var(--forest); }
+.sortl { margin-left: auto; display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 600; color: var(--muted); }
+.count { margin: 16px 0 14px; font-size: 13px; color: var(--muted); min-height: 20px; }
+
+.sk-card { background: var(--surface); border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; gap: 10px; padding-bottom: 16px; }
+.sk-img { aspect-ratio: 1; border-radius: 0; }
+.sk-line { height: 14px; margin: 0 14px; }
+.w70 { width: 70%; } .w40 { width: 40%; }
+.state { padding: 48px 24px; text-align: center; }
+.state-t { font-size: 18px; font-weight: 800; }
+.state p { margin: 10px 0 18px; font-size: 14px; color: var(--muted); }
+.more { text-align: center; margin-top: 32px; }
+.main .pgrid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (min-width: 1200px) { .main .pgrid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; } }
+
+@media (max-width: 900px) {
+  .shop { grid-template-columns: 1fr; padding-top: 10px; gap: 0; }
+  /* search + filter stay in reach while scrolling */
+  .bar { position: sticky; top: 52px; z-index: 20; margin: 0 calc(var(--gutter) * -1); padding: 10px var(--gutter); background: rgba(250, 248, 240, .96); backdrop-filter: blur(6px); border-bottom: 1px solid var(--line); gap: 10px; }
+  .fbtn { display: inline-flex; }
+  .sortl { display: none; }
+  .msort { display: block; }
+  .sbox { max-width: none; }
+  /* filters open as a bottom sheet */
+  .side {
+    position: fixed; z-index: 90; left: 0; right: 0; bottom: 0; top: auto; max-height: 82vh; border-radius: 20px 20px 0 0; overflow-y: auto;
+    transform: translateY(102%); transition: transform .3s var(--ease); visibility: hidden; box-shadow: none; border: 0;
+  }
+  .side.open { transform: none; visibility: visible; box-shadow: 0 -10px 40px rgba(10, 42, 30, .25); }
+  .x, .apply { display: inline-flex; }
+  .scrim { display: block; position: fixed; inset: 0; z-index: 80; border: 0; background: rgba(10, 42, 30, .5); }
+  .side-foot { margin-top: auto; position: sticky; bottom: 0; padding: 12px 0 4px; background: var(--surface); }
+  .main .pgrid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+}
+@media (max-width: 640px) {
+  .phead { padding-top: 14px; }
+  .phead h1 { font-size: 24px; }
+  .crumbs { font-size: 12px; }
+  .tabs .chip { min-height: 36px; padding: 0 14px; }
+  .fbtn span:not(.dotn) { display: none; }
+  .fbtn { width: 44px; padding: 0; justify-content: center; }
+  .count { margin: 12px 0 10px; }
+  .main .pgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 }
 </style>

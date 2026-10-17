@@ -21,6 +21,7 @@ class CheckoutRequest extends FormRequest
 
         $rules = [
             'shipping_method' => ['required', Rule::in(['standard', 'express'])],
+            'payment_method' => ['nullable', Rule::in(['online', 'cod'])],
             'notes' => ['nullable', 'string', 'max:500'],
 
             'customer' => [$guest ? 'required' : 'nullable', 'array'],

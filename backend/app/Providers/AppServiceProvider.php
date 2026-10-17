@@ -18,7 +18,11 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         RateLimiter::for('api', function (Request $request) {
-            return Limit::perMinute(60)->by($request->user('sanctum')?->id ?: $request->ip());
+            // Signed-in staff click through many panel screens quickly; guests share IPs (mobile networks).
+            $user = $request->user('sanctum');
+
+            return Limit::perMinute((int) config('kokango.rate_limit_per_minute', 120) * ($user ? 2 : 1))
+                ->by($user?->id ?: $request->ip());
         });
 
         RateLimiter::for('auth', function (Request $request) {

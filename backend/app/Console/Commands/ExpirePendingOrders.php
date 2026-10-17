@@ -26,6 +26,9 @@ class ExpirePendingOrders extends Command
             ->where('status', 'pending')
             ->where('payment_status', 'pending')
             ->where('placed_at', '<', $cutoff)
+            // Cash on Delivery is paid at the door, so it never "expires" (even if staff move it back to pending).
+            ->whereNotExists(fn ($q) => $q->selectRaw('1')->from('payments')
+                ->whereColumn('payments.order_id', 'orders.id')->where('payments.gateway', 'cod'))
             ->orderBy('id')
             ->chunkById(100, function ($chunk) use ($orders, &$count) {
                 foreach ($chunk as $order) {

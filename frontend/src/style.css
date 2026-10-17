@@ -1,2 +1,228 @@
-html { scroll-behavior: smooth; }
-body { margin: 0; background: #F8F7EF; min-height: 100vh; }
+/* ==========================================================================
+   Kokango design system (frontend only)
+   One place for tokens, base styles and the shared UI pieces every
+   customer-facing page uses: buttons, cards, form fields, chips, skeletons.
+   Page and component <style scoped> blocks only hold layout that is
+   specific to that page.
+   ========================================================================== */
+
+:root {
+  /* brand */
+  --forest: #103D2C;        /* deep forest green: header, footer, primary buttons */
+  --forest-deep: #0A2A1E;   /* hover / pressed */
+  --leaf: #379237;          /* fresh green: accents, icons, success */
+  --mango: #FEBC04;         /* golden mango: highlights, secondary CTA */
+  --mango-hover: #FFCB38;
+  --gold: #D8A33F;          /* mustard: announcement strip */
+  --terra: #9A4A3A;         /* terracotta: figures band */
+
+  /* surfaces and text */
+  --bg: #FAF8F0;            /* warm off-white page background */
+  --surface: #FFFFFF;
+  --tint: #E8F3E4;         /* pale green */
+  --sun: #FFF4CC;          /* pale mango */
+  --ink: #14231B;
+  --muted: #55645A;
+  --line: #E3E0D0;
+  --amber: #8A5A00;         /* text colour that is readable on --sun */
+  --danger: #B3261E;
+  --danger-bg: #FBE4E0;
+
+  /* legacy names kept so older markup keeps working */
+  --green: var(--forest);
+  --green-hover: var(--forest-deep);
+
+  /* shape, depth, motion */
+  --r-sm: 10px;
+  --r-md: 14px;
+  --r-lg: 18px;
+  --shadow-sm: 0 1px 2px rgba(16, 61, 44, .06), 0 4px 14px rgba(16, 61, 44, .05);
+  --shadow-md: 0 10px 30px rgba(16, 61, 44, .12);
+  --ease: cubic-bezier(.2, .7, .2, 1);
+  --dur: .25s;
+
+  --wrap: 1280px;
+  --gutter: 32px;
+  --font: 'Plus Jakarta Sans', 'Noto Sans Devanagari', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font); min-height: 100vh; overflow-x: clip; }
+img { max-width: 100%; }
+a { color: inherit; text-decoration: none; }
+a:hover { color: var(--green); }
+button, input, select, textarea { font-family: inherit; }
+button { cursor: pointer; }
+h1, h2, h3, p { overflow-wrap: break-word; }
+
+.dcroot { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font); }
+
+/* ---- focus: always visible for keyboard users ---- */
+:focus-visible { outline: 2px solid var(--leaf); outline-offset: 2px; }
+/* touch comfort: no double-tap-zoom delay on controls, a soft tap flash instead of the grey default */
+a, button, [role="button"], input, select, textarea, label { touch-action: manipulation; }
+html { -webkit-text-size-adjust: 100%; -webkit-tap-highlight-color: rgba(16, 61, 44, .12); scroll-padding-top: 76px; }
+@media (min-width: 900px) { html { scroll-padding-top: 124px; } }
+img { max-width: 100%; height: auto; }
+.on-dark :focus-visible { outline-color: var(--mango); }
+
+.sr-only {
+  position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+}
+.skip-link {
+  position: absolute; left: 12px; top: -60px; z-index: 200; background: var(--mango); color: var(--ink);
+  padding: 10px 16px; border-radius: var(--r-sm); font-weight: 700; font-size: 14px;
+}
+.skip-link:focus { top: 12px; color: var(--ink); }
+
+/* ---- layout helpers ---- */
+.wrap { max-width: var(--wrap); margin: 0 auto; padding: 0 var(--gutter); }
+@media (max-width: 600px) { :root { --gutter: 16px; } }
+
+.eyebrow { font-size: 12px; font-weight: 700; letter-spacing: 1.6px; text-transform: uppercase; color: var(--leaf); }
+.sec-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 24px; margin-bottom: 28px; }
+.sec-title { margin: 6px 0 0; font-size: clamp(26px, 4.5vw, 36px); font-weight: 800; letter-spacing: -.8px; line-height: 1.1; }
+.sec-sub { margin: 8px 0 0; font-size: 15px; line-height: 1.6; color: var(--muted); max-width: 560px; }
+.link-arrow { font-size: 14px; font-weight: 700; color: var(--green); display: inline-flex; align-items: center; gap: 6px; min-height: 44px; }
+.link-arrow:hover { color: var(--forest-deep); text-decoration: underline; text-underline-offset: 4px; }
+
+/* ---- surfaces ---- */
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); box-shadow: var(--shadow-sm); }
+.lift { transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease); }
+.lift:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+
+/* ---- buttons ---- */
+/* .btn-line is also used on its own (without .btn) across the older pages, so it shares the base */
+.btn, .btn-line {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 46px; padding: 0 26px; border: 1.5px solid transparent; border-radius: 999px;
+  background: var(--forest); color: #fff; font-size: 15px; font-weight: 700; line-height: 1.2;
+  text-align: center; cursor: pointer;
+  transition: background var(--dur), color var(--dur), transform var(--dur) var(--ease), box-shadow var(--dur);
+}
+.btn:hover { background: var(--forest-deep); color: #fff; transform: translateY(-1px); box-shadow: 0 8px 18px rgba(16, 61, 44, .22); }
+.btn:active { transform: none; box-shadow: none; }
+.btn:disabled, .btn[aria-disabled="true"], .btn-line:disabled { opacity: .5; cursor: not-allowed; transform: none; box-shadow: none; }
+.btn[aria-busy="true"] { cursor: progress; }
+.btn-sun { background: var(--mango); color: var(--ink); }
+.btn-sun:hover { background: var(--mango-hover); color: var(--ink); box-shadow: 0 8px 18px rgba(254, 188, 4, .35); }
+.btn-line { background: transparent; color: var(--ink); border-color: var(--ink); }
+.btn-line:hover { background: var(--ink); color: #fff; box-shadow: none; }
+.btn-sm { min-height: 40px; padding: 0 18px; font-size: 14px; }
+.btn-block { display: flex; width: 100%; }
+.on-dark .btn-line { color: #fff; border-color: rgba(255, 255, 255, .6); }
+.on-dark .btn-line:hover { background: #fff; color: var(--forest); }
+
+/* icon button */
+.icon {
+  width: 44px; height: 44px; flex: none; padding: 0; position: relative;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 50%;
+  transition: border-color var(--dur), color var(--dur), background var(--dur), transform var(--dur) var(--ease);
+}
+.icon:hover { border-color: var(--green); color: var(--green); }
+.icon:disabled { opacity: .4; cursor: not-allowed; }
+.icon.is-sun { background: var(--mango); border-color: var(--mango); color: var(--ink); }
+.icon.is-sun:hover { background: var(--mango-hover); color: var(--ink); }
+
+/* ---- chips / pills / badges ---- */
+.chip, .pill {
+  display: inline-flex; align-items: center; justify-content: center; min-height: 40px; padding: 0 18px;
+  background: var(--surface); color: var(--ink); border: 1.5px solid var(--line); border-radius: 999px;
+  font-size: 13px; font-weight: 600; white-space: nowrap;
+  transition: border-color var(--dur), background var(--dur), color var(--dur);
+}
+.pill { min-height: 44px; padding: 0 22px; font-size: 14px; }
+.chip:hover, .pill:hover { border-color: var(--green); }
+.chip.on, .pill.on { border-color: var(--green); background: var(--green); color: #fff; }
+.tag { display: inline-block; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 800; letter-spacing: .4px; text-transform: uppercase; }
+.tag-sale { background: var(--forest); color: #fff; }
+.tag-sun { background: var(--mango); color: var(--ink); }
+.tag-soft { background: var(--tint); color: var(--forest); }
+.tag-out { background: #ECE9DC; color: var(--muted); }
+.badge { display: inline-block; padding: 5px 14px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+
+/* ---- forms ---- */
+.field { display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 600; color: var(--muted); }
+.field input, .field select, .field textarea {
+  min-height: 48px; background: #fff; border: 1px solid #CFCBB6; border-radius: var(--r-sm);
+  padding: 0 14px; color: var(--ink); font-size: 14px; font-weight: 500;
+  transition: border-color var(--dur), box-shadow var(--dur);
+}
+.field input:hover, .field select:hover { border-color: #A9A58E; }
+.field input:focus, .field select:focus, .field textarea:focus { outline: none; border-color: var(--forest); box-shadow: 0 0 0 3px rgba(55, 146, 55, .28); }
+.field input.bad, .field select.bad { border-color: var(--danger); }
+.field input[readonly] { background: #F2EFE2; }
+input::placeholder { color: #7B887F; }
+.hint { font-size: 12px; font-weight: 600; color: var(--muted); margin: 0; }
+.hint.ok { color: #1F6B2A; }
+.err { font-size: 12px; font-weight: 600; color: var(--danger); margin: 0; }
+.alert-err { margin: 0; padding: 12px 16px; border-radius: var(--r-sm); background: var(--danger-bg); color: var(--danger); font-size: 13px; font-weight: 600; }
+.opt { display: flex; align-items: center; gap: 14px; padding: 16px 20px; border-radius: var(--r-md); border: 1.5px solid var(--line); background: #fff; cursor: pointer; font-size: 14px; }
+.opt.on { border-color: var(--forest); background: var(--tint); }
+select.sel {
+  min-height: 44px; background: #fff; border: 1px solid #CFCBB6; border-radius: 999px; color: var(--ink);
+  padding: 0 16px; font-size: 14px; font-weight: 600;
+}
+
+/* ---- loading skeletons ---- */
+.skeleton { position: relative; overflow: hidden; background: #ECE9DC; border-radius: var(--r-sm); }
+.skeleton::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .65), transparent);
+  transform: translateX(-100%); animation: shimmer 1.4s infinite;
+}
+@keyframes shimmer { to { transform: translateX(100%); } }
+
+/* ---- product grid shared by home, shop, related ---- */
+.pgrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 22px; }
+@media (max-width: 900px) { .pgrid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; } }
+@media (max-width: 640px) { .pgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; } }
+
+/* centred section heading used on the storefront */
+.sec-c { text-align: center; margin-bottom: 26px; }
+.sec-c .sec-title { margin: 4px 0 0; }
+.sec-c .sec-sub { margin: 8px auto 0; }
+@media (max-width: 640px) { .sec-c { margin-bottom: 18px; } }
+
+/* horizontally scrolling row with snap (touch friendly, no JS needed) */
+.hscroll {
+  display: flex; gap: 20px; overflow-x: auto; scroll-snap-type: x mandatory; scroll-behavior: smooth;
+  padding: 6px var(--gutter) 18px; margin: 0 calc(var(--gutter) * -1);
+  scroll-padding-inline: var(--gutter); scrollbar-width: thin;
+}
+.hscroll > * { flex: 0 0 min(260px, 72vw); scroll-snap-align: start; }
+
+/* ---- scroll reveal: progressive enhancement, content is visible without it ---- */
+@keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@supports (animation-timeline: view()) {
+  .reveal { animation: rise linear both; animation-timeline: view(); animation-range: entry 0% entry 35%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}
+
+/* ---- seasonal effects (composables/useSeasonalFx.js): a canvas over landscape areas, never clickable ---- */
+.sfx-layer { position: absolute; inset: 0; z-index: 1; overflow: hidden; pointer-events: none; }
+.sfx-layer canvas { display: block; pointer-events: none; }
+@media (prefers-reduced-motion: reduce) { .sfx-layer { display: none; } }
+
+/* ---- page change: a quick fade (opacity only, so sticky headers keep working) ---- */
+.page-enter-active { transition: opacity .28s ease; }
+.page-leave-active { transition: opacity .12s ease; }
+.page-enter-from, .page-leave-to { opacity: 0; }
+
+/* ---- storytelling reveal (see composables/useReveal.js) ---- */
+.rv { opacity: 0; transform: translateY(24px); transition: opacity .9s var(--ease) var(--rv-delay, 0ms), transform .9s var(--ease) var(--rv-delay, 0ms); }
+.rv.rv-in { opacity: 1; transform: none; }
+.rv-split .w { display: inline-block; opacity: 0; transform: translateY(.55em); transition: opacity .7s var(--ease), transform .7s var(--ease); transition-delay: calc(var(--rv-delay, 0ms) + var(--i, 0) * 55ms); }
+.rv-split.rv-in .w { opacity: 1; transform: none; }
+
+/* ---- touch comfort on phones: larger hit areas for small links and pills ---- */
+@media (max-width: 700px) {
+  .chip { min-height: 44px; }
+}

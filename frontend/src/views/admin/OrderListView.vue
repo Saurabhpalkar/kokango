@@ -9,7 +9,7 @@
   <div v-if="error" class="errbox" role="alert"><span>{{ error }}</span><button type="button" @click="load">Retry</button></div>
 
   <div class="ordwrap">
-    <div ref="listEl" class="card ordlist" style="flex:1 1 560px;border-radius:30px;padding:16px 20px;box-sizing:border-box;min-width:0">
+    <div ref="listEl" class="card ordlist" style="flex:1 1 560px;border-radius:18px;padding:16px 20px;box-sizing:border-box;min-width:0">
       <div style="overflow-x:auto">
       <table class="rt" style="width:100%;border-collapse:collapse;min-width:620px">
         <thead><tr><th>ORDER</th><th>CUSTOMER</th><th>DATE</th><th>TOTAL</th><th>PAYMENT</th><th>STATUS</th></tr></thead>
@@ -23,7 +23,7 @@
       <AdminPager :meta="meta" @page="go" />
     </div>
 
-    <aside v-if="selNo" ref="detailEl" class="card orddetail" style="flex:0 1 360px;border-radius:30px;padding:28px;box-sizing:border-box;min-width:0">
+    <aside v-if="selNo" ref="detailEl" class="card orddetail" style="flex:0 1 360px;border-radius:18px;padding:28px;box-sizing:border-box;min-width:0">
       <div v-if="detailLoading && !sel" class="state">Loading order&hellip;</div>
       <div v-else-if="detailError && !sel" class="err">{{ detailError }}</div>
       <template v-if="sel">
@@ -48,7 +48,10 @@
         <div style="display:flex;justify-content:space-between;margin:10px 0 20px;font-weight:800"><span>Total</span><span style="color:var(--green)">{{ inrp(sel.total_paise) }}</span></div>
 
         <div class="cap">PAYMENT</div>
-        <div style="font-size:14px;line-height:1.7;margin-bottom:20px"><span class="badge" :style="paymentPill(sel.payment_status)">{{ label(sel.payment_status) }}</span><template v-if="sel.payment"> <span style="color:var(--muted)">&nbsp;{{ sel.payment.gateway }}<template v-if="sel.payment.method"> &middot; {{ sel.payment.method }}</template></span></template></div>
+        <div style="font-size:14px;line-height:1.7;margin-bottom:20px"><span class="badge" :style="paymentPill(sel.payment_status)">{{ label(sel.payment_status) }}</span><template v-if="sel.payment"> <span style="color:var(--muted)">&nbsp;{{ sel.payment.gateway === 'cod' ? 'Cash on Delivery' : sel.payment.gateway }}<template v-if="sel.payment.method && sel.payment.gateway !== 'cod'"> &middot; {{ sel.payment.method }}</template></span></template><div v-if="sel.payment && sel.payment.gateway === 'cod' && sel.payment_status !== 'paid'" style="margin-top:6px;font-weight:700;color:#9A5B00">Collect {{ inrp(sel.total_paise) }} in cash on delivery. It is marked paid when you set the order to Delivered.</div></div>
+
+        <div class="cap">CONTACT CUSTOMER</div>
+        <div style="font-size:14px;line-height:1.7;margin-bottom:20px"><a v-if="waLink" :href="waLink" target="_blank" rel="noopener" class="ghost" style="display:inline-flex;align-items:center;min-height:40px;padding:6px 16px;border-radius:999px;border:1.5px solid var(--ink);text-decoration:none;color:var(--ink);font-weight:600">Message on WhatsApp</a><span v-if="sel.customer?.phone" style="color:var(--muted)"> &nbsp;{{ sel.customer.phone }}</span></div>
 
         <div class="cap">SHIPMENT</div>
         <div v-if="sel.shipment" style="font-size:14px;line-height:1.7;margin-bottom:20px">{{ sel.shipment.courier || sel.shipment.provider }} &middot; AWB <span style="font-weight:700">{{ sel.shipment.awb || '—' }}</span><br><span style="color:var(--muted)">Status: {{ label(sel.shipment.status) }}</span></div>
@@ -57,7 +60,7 @@
         <label for="st" class="cap" style="display:block">UPDATE ORDER STATUS</label>
         <select id="st" v-model="chosen"><option v-for="st in orderStatuses" :key="st" :value="st">{{ label(st) }}</option></select>
         <div style="display:flex;gap:12px;margin-top:16px;flex-wrap:wrap"><button class="btn" :disabled="acting" @click="updateStatus">Update status</button><button class="ghost" style="min-height:44px;padding:9px 20px;font-size:14px;border-color:var(--ink)" :disabled="acting" @click="createShipment">Create shipment</button></div>
-        <div v-if="note" :style="noteIsErr ? 'background:#FBE3E1;color:#B3261E' : 'background:var(--tint);color:var(--green)'" style="margin-top:14px;border-radius:14px;padding:10px 14px;font-size:13px;font-weight:700" data-testid="order-note">{{ note }}</div>
+        <div v-if="note" :style="noteIsErr ? 'background:var(--danger-bg);color:var(--danger)' : 'background:var(--tint);color:var(--green)'" style="margin-top:14px;border-radius:14px;padding:10px 14px;font-size:13px;font-weight:700" data-testid="order-note">{{ note }}</div>
       </template>
     </aside>
   </div>
@@ -93,6 +96,15 @@ const acting = ref(false)
 let seq = 0
 let dseq = 0
 
+// "Message on WhatsApp": opens WhatsApp with a ready-to-send note for this order (no API or cost needed).
+const waLink = computed(() => {
+  const o = sel.value
+  const digits = String(o?.customer?.phone || '').replace(/\D/g, '').slice(-10)
+  if (digits.length !== 10) return ''
+  const cod = o.payment?.gateway === 'cod' && o.payment_status !== 'paid'
+  const text = `Hello ${o.customer?.name || ''}, this is Kokango about your order ${o.order_no}. Status: ${label(o.status)}.` + (cod ? ` Please keep ${inrp(o.total_paise)} ready to pay in cash on delivery.` : '') + ' Thank you!'
+  return `https://wa.me/91${digits}?text=${encodeURIComponent(text)}`
+})
 const address = computed(() => { const a = sel.value?.address; return a ? [a.line1, a.line2, `${a.city}, ${a.state} ${a.pincode}`].filter(Boolean).join(', ') : '' })
 
 async function load(keepSelection = false) {

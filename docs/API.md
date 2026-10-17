@@ -53,7 +53,7 @@ Base URL: `{APP_URL}/api/v1` (local: `http://localhost:8000/api/v1`). All bodies
 - `GET /categories` -> `{data:[{id, slug, name, products_count}]}` (active categories only)
 - `GET /products?category=<slug>&search=&min_price=<paise>&max_price=<paise>&sort=newest|price_asc|price_desc&page&per_page` -> paginated Product list (only active products). `price` filters/sort use the product's lowest active variant price.
 - `GET /products/{slug}` -> `{data: Product}` (404 if missing/inactive)
-- `GET /settings/public` -> `{data:{ store_name, gst_percent, shipping_standard_paise, shipping_express_paise, free_shipping_above_paise, free_shipping_note, whatsapp_number }}`
+- `GET /settings/public` -> `{data:{ store_name, gst_percent, shipping_standard_paise, shipping_express_paise, free_shipping_above_paise, free_shipping_note, whatsapp_number, cod_enabled, cod_max_paise }}`
 
 ### Cart (guest header `X-Cart-Token` or auth)
 - `GET /cart` -> `{data: Cart}` (creates an empty cart if none; the returned `token` must be stored by the frontend)
@@ -72,7 +72,7 @@ Base URL: `{APP_URL}/api/v1` (local: `http://localhost:8000/api/v1`). All bodies
 
 ### Checkout (guest header `X-Cart-Token` or auth)
 - `POST /checkout/quote` `{shipping_method: "standard"|"express"}` -> `{data:{ items:[...Cart items], subtotal_paise, shipping_paise, tax_paise, discount_paise, total_paise }}`
-- `POST /checkout` `{ customer?: {name, email, phone} (required for guests), address: {name, phone, line1, line2?, city, state, pincode} | address_id (auth), shipping_method, notes? }` -> 201 `{data:{ order: Order (with token), payment:{ gateway: "razorpay"|"fake", gateway_order_id, key_id, amount_paise, currency: "INR", prefill:{name,email,phone} } }}`
+- `POST /checkout` `{ customer?: {name, email, phone} (required for guests), address: {name, phone, line1, line2?, city, state, pincode} | address_id (auth), shipping_method, payment_method?: "online"(default)|"cod", notes? }` -> 201 `{data:{ order: Order (with token), payment:{ gateway: "razorpay"|"fake"|"cod", gateway_order_id, key_id, amount_paise, currency: "INR", prefill:{name,email,phone} } }}`
   - validates stock with row locks inside a transaction, snapshots items, creates the order (`pending`/`pending`), decrements stock, creates a pending payment and the gateway order.
   - 409 if the cart is empty or an item is out of stock / pincode not serviceable.
 
@@ -100,11 +100,37 @@ Base URL: `{APP_URL}/api/v1` (local: `http://localhost:8000/api/v1`). All bodies
 - **Shipments**: `GET /admin/shipments?status=&page=` -> Shipment list with `customer_name`; `POST /admin/orders/{order_no}/shipment` -> Shipment (creates the shipment with the provider, stores AWB/courier; 409 if the order is not paid or already has an active shipment); `PUT /admin/shipments/{id}/status` `{status}` -> Shipment (keeps order status in step: picked_up/in_transit -> shipped, delivered -> delivered); `POST /admin/shipments/{id}/sync` -> Shipment (pull latest from the provider).
 - **Customers**: `GET /admin/customers?search=&page=` -> `{data:[{id, name, email, phone, city, orders_count, total_spent_paise, is_active, created_at}]}`; `PUT /admin/customers/{id}` `{is_active}`.
 - **Settings**: `GET /admin/settings`, `PUT /admin/settings` -> `{data:{ store_name, store_phone, store_email, store_address, whatsapp_number, shipping_standard_paise, shipping_express_paise, free_shipping_above_paise, free_shipping_note, gst_percent, notification_email }}`
-- **Users & roles**: `GET /admin/users`, `POST /admin/users` `{name,email,password,role}`, `PUT /admin/users/{id}` `{name?, role?, is_active?}`, `GET /admin/roles` -> `{data:["admin","customer"]}`.
+- **Users & roles**: `GET /admin/users`, `POST /admin/users` `{name,email,password,role}`, `PUT /admin/users/{id}` `{name?, role?, is_active?}`, `GET /admin/roles` -> `{data:["admin","customer"]}` (the `vendor` role is not listed: sellers are created under Marketplace).
+- **Marketplace overview / settings**: `GET /admin/marketplace/overview` -> `{data:{ stats:{vendors, approved_vendors, pending_vendors, pending_products, gmv_paise, commission_paise, payable_paise, orders}, top_vendors, pending_vendors, pending_products, sales_by_day[14] }}`; `GET|PUT /admin/marketplace/settings` `{default_commission (0-50), min_payout_paise, auto_approve_products}`.
+- **Vendors**: `GET /admin/vendors?status=&search=&page=` -> `{data:[vendor + figures], meta, counts:{all,pending,approved,suspended,rejected}}` (`commission_percent` = rate in force, `commission_percent_override` = own rate or null); `POST /admin/vendors` (profile + `password`, `approve_now?`); `GET /admin/vendors/{id}` -> `{vendor, stats, checklist, products, orders, payouts, sales_by_day}`; `PUT /admin/vendors/{id}` (profile, `bank`, `commission_percent` or null); `POST /admin/vendors/{id}/approve|reject|suspend|reactivate` `{reason?}` (approve needs the checklist complete -> else 409; reject/suspend need `reason`; suspend pauses live listings, reactivate restores them).
+- **Listing review**: `GET /admin/product-approvals?status=pending_review|active|rejected|paused|all&search=&page=` -> `{data:[listing + vendor_name, vendor_status], meta, counts}`; `POST /admin/product-approvals/{id}/approve|reject|unpublish` `{reason?}` (reject needs `reason`, shown to the seller).
+- **Seller payouts**: `GET /admin/vendor-payouts` -> `{data:{summary, vendors:[balance rows + min_ok], payouts, settings}}`; `POST /admin/vendor-payouts` `{vendor_id}` (pays all delivered, unsettled vendor orders; 409 when nothing is due, below the minimum or no bank account); `POST /admin/vendor-payouts/{id}/status` `{status: processing|paid, utr?}` (`paid` needs `utr`).
+
+## Vendor (seller) endpoints (prefix `/vendor`)
+Sellers sign in separately: `Authorization: Bearer <vendor token>` (the frontend keeps it in `kokango_vendor_token`). All routes except register/login need `auth:sanctum` + a vendor store (403 otherwise).
+- **Auth**: `POST /vendor/auth/register` `{store_name, owner_name, email, phone, city, password, gst_no?, description?}` -> 201 `{data:{token, vendor}}` (store starts `pending`); `POST /vendor/auth/login` `{login (email), password}` -> `{data:{token, vendor}}` (403 when suspended or rejected); `GET /vendor/auth/me`; `POST /vendor/auth/logout`.
+- **Dashboard**: `GET /vendor/dashboard` -> `{data:{stats:{total_sales_paise, earnings_paise, orders, pending_orders, products, live_products, low_stock_count}, sales_by_day[7], recent_orders, low_stock}}`.
+- **Products**: `GET /vendor/products?search=&status=&page=` (6 per page), `POST /vendor/products`, `GET|PUT|DELETE /vendor/products/{id}`. Body `{name, category_id, description?, image_url?, status: draft|pending_review, variants:[{id?, size_label, sku?, price_paise, mrp_paise?, stock}]}`. `image_url` may be a `data:image/(png|jpeg|webp);base64,...` upload (max 2 MB, stored under `products/`). Submitting goes to review (or live at once when auto-approve is on and the store is approved). A listing is on the shop only when it is `active` and the store is `approved`. A sold product is archived instead of deleted.
+- **Orders**: `GET /vendor/orders?status=&search=&page=`, `GET /vendor/orders/{order_no}`, `PUT /vendor/orders/{order_no}/status` `{status}`: pending -> confirmed -> packed -> shipped, or pending -> cancelled (only when every item of the order is this seller's: cancels the customer order, refunds and restores stock). A seller sees an order only once it is confirmed (paid online, or Cash on Delivery), and only its own items, with `subtotal_paise`, `commission_paise`, `earning_paise`. When all sellers of a marketplace-only order have shipped, the order becomes `shipped`; cancelling, shipping or delivering the whole order (admin/courier) is passed on to the sellers' parts.
+- **Inventory**: `GET /vendor/inventory?search=`; `POST /vendor/inventory/{variant_id}/adjust` `{stock}`.
+- **Payouts**: `GET /vendor/payouts` -> `{data:{summary:{available_paise, processing_paise, paid_paise, commission_percent}, payouts}}`.
+- **Store settings**: `GET /vendor/store`, `PUT /vendor/store` (profile + `bank:{account_name, account_no, ifsc, bank_name}`).
+
+Commission: each seller's part of an order stores the rate in force when the order was confirmed (seller override, else `default_commission`); `earning = subtotal - round(subtotal x rate / 100)`. Seller earnings become payable when that part is `delivered`.
 
 ## Seed data (for local use)
 - Admin: `admin@kokango.test` / `Admin@12345`. Customer: `rohan@example.com` / `Password@123`.
+- Sellers (`VendorSeeder`, password `Vendor@12345`): `vendor@kokango.test` (Sahyadri Farms, approved), `konkan@kokango.test` (Konkan Kitchen, approved, 8%), `greenroots@kokango.test` (pending).
 - 3 categories, 7 products with variants, demo orders KKG-2026-000112 .. 000123 with payments and shipments.
 
 ## Environment (backend/.env)
 `PAYMENT_DRIVER=fake|razorpay` (+ `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_WEBHOOK_SECRET`), `SHIPPING_DRIVER=fake|shiprocket` (+ `SHIPROCKET_EMAIL`, `SHIPROCKET_PASSWORD`, `SHIPROCKET_PICKUP_PINCODE`), `FRONTEND_URL=http://localhost:5173`. Secrets never go to the frontend.
+
+
+## Cash on Delivery (COD)
+- `POST /checkout` with `payment_method: "cod"` places a COD order: `order.status = "confirmed"`, `order.payment_status = "pending"`, `payment.gateway = "cod"` (no `gateway_order_id`, no payment window). Stock is taken, the cart is emptied and the confirmation emails are sent at once.
+- COD is switched on/off with `COD_ENABLED` (default true) and limited with `COD_MAX_PAISE` (0 = no limit) in `backend/.env`; both are reported in `GET /settings/public`. Over the limit or switched off: HTTP 409.
+- Admin: a COD order may be shipped while unpaid. The payment becomes `paid` (method `cod`) when the order or its shipment is set to `delivered`. Cancelling an unpaid COD order releases the stock; refunding a paid COD payment is manual (no gateway call).
+
+## Order emails
+Sent by `App\Services\OrderNotifier` through Laravel Mail (`MAIL_*` in `.env`; `MAIL_MAILER=log` writes them to `storage/logs/laravel.log`). Events: order confirmed (to the customer and to Admin > Settings > Notification email), shipped, delivered. A mail failure is logged and never blocks an order.

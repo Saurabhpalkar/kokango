@@ -2,7 +2,7 @@
 <AdminLayout active="categories">
   <div class="hd"><div><h1>Categories</h1><div class="sub">{{ cats.length }} categories</div></div></div>
 
-  <div class="card" style="border-radius:30px;padding:22px 26px;margin-bottom:24px">
+  <div class="card" style="border-radius:18px;padding:22px 26px;margin-bottom:24px">
     <form novalidate style="display:flex;gap:12px;flex-wrap:wrap;align-items:center" @submit.prevent="add">
       <label for="newcat" style="position:absolute;left:-9999px">New category name</label>
       <input id="newcat" v-model="newName" class="s" placeholder="New category name" style="flex:1 1 240px">
@@ -12,7 +12,7 @@
     <div v-if="msg" class="ok" style="margin-top:10px">{{ msg }}</div>
   </div>
 
-  <div class="card" style="border-radius:30px;padding:16px 26px">
+  <div class="card" style="border-radius:18px;padding:16px 26px">
     <div style="overflow-x:auto">
     <table class="rt" style="width:100%;border-collapse:collapse;min-width:640px">
       <thead><tr><th>CATEGORY</th><th>SLUG</th><th>PRODUCTS</th><th>STATUS</th><th></th></tr></thead>
@@ -28,10 +28,10 @@
           </td>
           <td data-label="Slug" style="color:var(--muted)">{{ c.slug }}</td>
           <td data-label="Products" style="font-weight:700">{{ c.products_count }}</td>
-          <td data-label="Status"><span class="badge" :style="c.is_active ? 'background:#EAF3DD;color:#0B5D1E' : 'background:#EDEDE4;color:#3b4a3f'">{{ c.is_active ? 'Active' : 'Inactive' }}</span></td>
+          <td data-label="Status"><span class="badge" :style="c.is_active ? 'background:#E8F3E4;color:#103D2C' : 'background:#EDEDE4;color:#3b4a3f'">{{ c.is_active ? 'Active' : 'Inactive' }}</span></td>
           <td data-label="">
             <div v-if="confirming === c.id" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-              <span style="font-size:13px;font-weight:600;color:#B3261E">Delete {{ c.name }}?</span>
+              <span style="font-size:13px;font-weight:600;color:var(--danger)">Delete {{ c.name }}?</span>
               <button class="ghost danger" :disabled="busy" @click="remove(c)">Yes, delete</button>
               <button class="ghost" @click="confirming = null">Keep</button>
             </div>

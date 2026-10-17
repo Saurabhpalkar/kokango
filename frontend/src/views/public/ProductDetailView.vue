@@ -1,67 +1,119 @@
 <template>
 <div class="dcroot">
-<div style="width:100%;position:relative;overflow:hidden;background:var(--bg)">
   <AnnouncementBar />
-  <div style="position:absolute;top:-200px;right:-160px;width:560px;height:560px;border-radius:50%;background:var(--sun)"></div>
-  <div style="position:absolute;top:500px;left:-220px;width:460px;height:460px;border-radius:50%;background:var(--tint)"></div>
-  <div class="wrap" style="position:relative;max-width:1280px;margin:0 auto;padding:0 32px;box-sizing:border-box">
+  <SiteHeader active="products" search />
 
-    <SiteHeader active="products" search />
+  <main class="wrap page">
+    <nav class="crumbs" aria-label="Breadcrumb">
+      <a href="/">Home</a><span aria-hidden="true">/</span>
+      <a :href="product ? `/products?category=${product.category.slug}` : '/products'">{{ product ? product.category.name : 'Shop' }}</a><span aria-hidden="true">/</span>
+      <span aria-current="page">{{ product ? product.name : (loading ? 'Loading...' : 'Not found') }}</span>
+    </nav>
 
-    <div style="font-size:13px;color:var(--muted);padding:8px 0 24px;line-height:1.6"><a href="/">Home</a> &nbsp;/&nbsp; <a :href="`/products?category=${product ? product.category.slug : ''}`">{{ product ? product.category.name : 'Products' }}</a> &nbsp;/&nbsp; <span style="color:var(--ink);font-weight:600">{{ product ? product.name : (loading ? 'Loading...' : 'Not found') }}</span></div>
-
-    <section v-if="loading" class="card" style="border-radius:40px;padding:64px 24px;text-align:center;box-sizing:border-box;color:var(--muted)">Loading product...</section>
-    <section v-else-if="loadError" class="card" style="border-radius:40px;padding:64px 24px;text-align:center;box-sizing:border-box"><h1 style="margin:0;font-size:36px;font-weight:800">Something went wrong</h1><p role="alert" style="margin:12px 0 24px;color:var(--muted)">{{ loadError }}</p><button type="button" class="btn" @click="load">Try again</button></section>
-    <section v-else-if="!product" class="card" style="border-radius:40px;padding:64px 24px;text-align:center;box-sizing:border-box"><h1 style="margin:0;font-size:36px;font-weight:800">Product not found</h1><p style="margin:12px 0 24px;color:var(--muted)">We could not find the product you are looking for.</p><a class="btn" href="/products">Browse all products</a></section>
-    <section v-else class="pd" style="display:flex;flex-wrap:wrap;gap:56px;align-items:flex-start">
-      <div class="pd-gal" style="flex:1 1 480px;max-width:600px;min-width:0">
-        <div class="card pd-main" style="border-radius:48px;padding:24px;box-sizing:border-box"><div class="pd-mainbox" style="height:480px;display:flex;align-items:center;justify-content:center;border-radius:32px;background:linear-gradient(160deg,#fff,var(--tint));overflow:hidden"><img :src="mainImg" :alt="`${product.name} pack`" style="height:100%;width:auto;object-fit:contain"></div></div>
-        <div v-if="thumbs.length > 1" class="pd-thumbs" style="display:flex;gap:14px;margin-top:16px">
-          <template v-for="(t, t_i) in thumbs" :key="t_i">
-            <button type="button" class="card" @click="mainImg = t.img" :aria-label="`Show ${t.alt}`" :style="`flex:1;height:96px;border-radius:22px;padding:8px;box-sizing:border-box;border:2px solid ${t.img === mainImg ? '#0B5D1E' : '#E6E2D0'};display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer`"><img :src="t.img" :alt="t.alt" style="height:100%;width:auto;object-fit:contain"></button>
-          </template>
-        </div>
-      </div>
-
-      <div class="pd-info" style="flex:1 1 440px;min-width:0">
-        <span style="display:inline-block;background:var(--tint);color:var(--green);font-size:12px;font-weight:700;padding:6px 14px;border-radius:999px;letter-spacing:0.5px">{{ product.category.name.toUpperCase() }}</span>
-        <h1 style="margin:14px 0 0;font-size:clamp(30px,8vw,46px);font-weight:800;line-height:1.08;letter-spacing:-1px">{{ product.name }}</h1>
-        <div style="font-size:18px;color:var(--muted);margin-top:6px">{{ product.hindi_name }}</div>
-        <div style="display:flex;align-items:center;gap:10px;margin-top:16px"><span style="color:var(--amber);letter-spacing:2px">&#9733;&#9733;&#9733;&#9733;&#9733;</span><span style="font-size:13px;color:var(--muted)">4.8 &nbsp;(126 reviews)</span></div>
-        <div style="margin-top:20px;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap"><span style="font-size:clamp(32px,8vw,40px);font-weight:800;color:var(--green)">{{ variant ? inrp(variant.price_paise) : '' }}</span><template v-if="savePct > 0"><span style="font-size:17px;color:#8a948c;text-decoration:line-through">{{ inrp(variant.mrp_paise) }}</span><span style="font-size:13px;font-weight:600;color:var(--green);background:var(--tint);padding:4px 10px;border-radius:999px">Save {{ savePct }}%</span></template></div>
-        <div style="font-size:12px;color:var(--muted);margin-top:4px">Inclusive of all taxes</div>
-        <p style="margin:20px 0;font-size:15px;line-height:1.8;color:var(--muted);max-width:520px">{{ product.description }}</p>
-
-        <div style="font-size:14px;font-weight:700;margin-bottom:10px">Pack size</div>
-        <div style="display:flex;gap:12px;flex-wrap:wrap"><template v-for="v in variants" :key="v.id"><button type="button" class="pill" :class="{ on: variant && v.id === variant.id }" :style="v.in_stock ? '' : 'opacity:.55'" @click="pickVariant(v)">{{ v.size_label }}</button></template></div>
-        <div v-if="variant && !variant.in_stock" role="status" style="margin-top:12px;font-size:13px;font-weight:700;color:#C0392B">Out of stock</div>
-        <div v-else-if="variant && variant.stock < 10" role="status" style="margin-top:12px;font-size:13px;font-weight:700;color:var(--amber)">Only {{ variant.stock }} left</div>
-
-        <div class="pd-buy" style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-top:28px">
-          <div class="card" style="display:flex;align-items:center;border-radius:999px;height:48px;box-shadow:none"><button type="button" aria-label="Decrease" @click="qty = Math.max(1, qty - 1)" style="width:46px;height:48px;background:none;border:none;color:var(--ink);font-size:20px">&minus;</button><span style="width:34px;text-align:center;font-weight:700">{{ qty }}</span><button type="button" aria-label="Increase" @click="qty = Math.min(maxQty, qty + 1)" style="width:46px;height:48px;background:none;border:none;color:var(--ink);font-size:20px">+</button></div>
-          <button type="button" class="btn btn-sun" :disabled="!canBuy || busy" @click="addToCart">{{ canBuy ? 'Add to Cart' : 'Out of stock' }}</button>
-          <a v-if="canBuy" href="/checkout" class="btn" @click.prevent="buyNow">Buy Now</a>
-          <span v-else class="btn" aria-disabled="true" style="opacity:.45;cursor:not-allowed">Buy Now</span>
-        </div>
-
-        <div class="card pd-pin" style="margin-top:32px;border-radius:28px;padding:22px 26px;box-sizing:border-box">
-          <div style="font-size:14px;font-weight:700;margin-bottom:12px">Check delivery</div>
-          <form style="display:flex" @submit.prevent="checkPin"><label for="pin" style="position:absolute;left:-9999px">Pincode</label><input id="pin" v-model="pin" inputmode="numeric" maxlength="6" placeholder="Enter 6-digit pincode" style="flex:1;min-width:0;height:46px;box-sizing:border-box;background:var(--bg);border:1px solid var(--line);border-right:none;border-radius:999px 0 0 999px;padding:0 20px;color:var(--ink);font-size:14px"><button type="submit" class="btn" style="border-radius:0 999px 999px 0;padding:0 24px;height:46px">Check</button></form>
-          <div v-if="pinState === 'checking'" style="margin-top:12px;font-size:13px;font-weight:600;color:var(--muted)">Checking...</div>
-          <div v-else-if="pinState === 'ok'" style="margin-top:12px;font-size:13px;font-weight:600;color:var(--green)">&#10003; Delivery available to {{ pinInfo.city ? pinInfo.city + ', ' + pinInfo.state : pinInfo.pincode }}. Estimated {{ stdDays }} days.</div>
-          <div v-else-if="pinState === 'no'" role="alert" style="margin-top:12px;font-size:13px;font-weight:600;color:#C0392B">Sorry, we do not deliver to {{ pinInfo.pincode }} yet.</div>
-          <div v-else-if="pinState === 'error'" role="alert" style="margin-top:12px;font-size:13px;font-weight:600;color:#C0392B">{{ pinMsg }}</div>
-          <div v-else-if="pinState === 'bad'" role="alert" style="margin-top:12px;font-size:13px;font-weight:600;color:#C0392B">Enter a valid 6-digit pincode</div>
-        </div>
-
-        <div class="pd-trust" style="display:flex;gap:24px;flex-wrap:wrap;margin-top:24px;font-size:13px;font-weight:600;color:var(--muted)"><span>&#10003; Fresh small batches</span><span>&#10003; Secure Razorpay payment</span><span>&#10003; Easy returns</span></div>
-      </div>
+    <section v-if="loading" class="pd" aria-busy="true" aria-label="Loading product">
+      <div class="skeleton sk-main"></div>
+      <div class="sk-info"><div class="skeleton" style="height:18px;width:90px"></div><div class="skeleton" style="height:40px;width:80%"></div><div class="skeleton" style="height:30px;width:40%"></div><div class="skeleton" style="height:90px"></div><div class="skeleton" style="height:48px;width:60%"></div></div>
     </section>
+    <section v-else-if="loadError" class="card state"><h1>Something went wrong</h1><p role="alert">{{ loadError }}</p><button type="button" class="btn" @click="load">Try again</button></section>
+    <section v-else-if="!product" class="card state"><h1>Product not found</h1><p>We could not find the product you are looking for.</p><a class="btn" href="/products">Browse all products</a></section>
 
-    <SiteFooter />
+    <template v-else>
+      <section class="pd">
+        <!-- gallery -->
+        <div class="gal">
+          <div class="mainbox card" :class="{ zooming }" @mousemove="onZoom" @mouseenter="zooming = true" @mouseleave="zooming = false">
+            <img :src="mainImg" :alt="`${product.name} pack`" :style="{ transformOrigin: zoomOrigin }" width="560" height="560">
+            <span v-if="savePct > 0" class="tag tag-sale sale">-{{ savePct }}%</span>
+          </div>
+          <div v-if="thumbs.length > 1" class="thumbs">
+            <button v-for="(t, i) in thumbs" :key="i" type="button" class="thumb" :class="{ on: t.img === mainImg }" :aria-label="`Show image ${i + 1} of ${thumbs.length}`" :aria-pressed="t.img === mainImg ? 'true' : 'false'" @click="mainImg = t.img"><img :src="t.img" alt="" loading="lazy" width="96" height="96"></button>
+          </div>
+        </div>
+
+        <!-- info -->
+        <div class="info">
+          <a class="catlink tag tag-soft" :href="`/products?category=${product.category.slug}`">{{ product.category.name }}</a>
+          <h1>{{ product.name }}</h1>
+          <div v-if="product.hindi_name" class="hindi">{{ product.hindi_name }}</div>
+
+          <div class="price">
+            <span class="now">{{ variant ? inrp(variant.price_paise) : '' }}</span>
+            <template v-if="savePct > 0"><span class="was"><span class="sr-only">Original price </span>{{ inrp(variant.mrp_paise) }}</span><span class="tag tag-soft save">Save {{ savePct }}%</span></template>
+          </div>
+          <div class="tax">Inclusive of all taxes</div>
+
+          <p class="desc">{{ product.description }}</p>
+
+          <div class="lbl" id="size-l">Pack size</div>
+          <div class="sizes" role="group" aria-labelledby="size-l">
+            <button v-for="v in variants" :key="v.id" type="button" class="pill" :class="{ on: variant && v.id === variant.id, dim: !v.in_stock }" :aria-pressed="variant && v.id === variant.id ? 'true' : 'false'" @click="pickVariant(v)">{{ v.size_label }}</button>
+          </div>
+          <div v-if="variant && !variant.in_stock" role="status" class="stock bad">Out of stock</div>
+          <div v-else-if="variant && variant.stock < 10" role="status" class="stock low">Only {{ variant.stock }} left</div>
+
+          <div ref="buyEl" class="buy">
+            <div class="qty" role="group" aria-label="Quantity">
+              <button type="button" aria-label="Decrease quantity" :disabled="qty <= 1" @click="qty = Math.max(1, qty - 1)">&minus;</button>
+              <output aria-live="polite">{{ qty }}</output>
+              <button type="button" aria-label="Increase quantity" :disabled="qty >= maxQty" @click="qty = Math.min(maxQty, qty + 1)">+</button>
+            </div>
+            <button type="button" class="btn btn-sun grow" :disabled="!canBuy || busy" :aria-busy="busy ? 'true' : 'false'" @click="addToCart">{{ canBuy ? (busy ? 'Adding...' : 'Add to Cart') : 'Out of stock' }}</button>
+            <a v-if="canBuy" href="/checkout" class="btn grow" @click.prevent="buyNow">Buy Now</a>
+            <span v-else class="btn grow" aria-disabled="true">Buy Now</span>
+          </div>
+
+          <div class="card pin">
+            <h2>Check delivery</h2>
+            <form @submit.prevent="checkPin">
+              <label for="pin" class="sr-only">Pincode</label>
+              <input id="pin" v-model="pin" inputmode="numeric" maxlength="6" placeholder="Enter 6-digit pincode" autocomplete="postal-code">
+              <button type="submit" class="btn btn-sm">Check</button>
+            </form>
+            <div v-if="pinState === 'checking'" class="pmsg" role="status">Checking...</div>
+            <div v-else-if="pinState === 'ok'" class="pmsg ok" role="status">&#10003; Delivery available to {{ pinInfo.city ? pinInfo.city + ', ' + pinInfo.state : pinInfo.pincode }}. Estimated {{ stdDays }} days.</div>
+            <div v-else-if="pinState === 'no'" class="pmsg bad" role="alert">Sorry, we do not deliver to {{ pinInfo.pincode }} yet.</div>
+            <div v-else-if="pinState === 'error'" class="pmsg bad" role="alert">{{ pinMsg }}</div>
+            <div v-else-if="pinState === 'bad'" class="pmsg bad" role="alert">Enter a valid 6-digit pincode</div>
+          </div>
+
+          <ul class="trust">
+            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Fresh small batches</li>
+            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Secure Razorpay payment</li>
+            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Easy returns</li>
+          </ul>
+
+          <details v-if="product.ingredients" class="ship" open>
+            <summary>Ingredients</summary>
+            <p>{{ product.ingredients }}</p>
+          </details>
+          <details v-if="product.how_to_use" class="ship">
+            <summary>How to use</summary>
+            <ul class="steps"><li v-for="(st, i) in usageSteps" :key="i">{{ st }}</li></ul>
+          </details>
+          <details class="ship">
+            <summary>Shipping &amp; returns</summary>
+            <p>Orders are delivered across India. Use the pincode check above for your estimate. Read our <a href="/policy/shipping">Shipping Policy</a> and <a href="/policy/refund">Refund Policy</a> for details.</p>
+          </details>
+        </div>
+      </section>
+
+      <!-- related products from the same category -->
+      <section v-if="related.length" class="rel" aria-labelledby="rel-h">
+        <div class="sec-head"><div><div class="eyebrow">More to explore</div><h2 id="rel-h" class="sec-title">You may also like</h2></div><a :href="`/products?category=${product.category.slug}`" class="link-arrow">View all <span aria-hidden="true">&rarr;</span></a></div>
+        <div class="pgrid"><ProductCard v-for="(p, k) in related" :key="p.id" v-reveal="{ delay: (k % 4) * 80 }" :product="p" :sizes="false" /></div>
+      </section>
+    </template>
+  </main>
+
+  <!-- phones: purchase actions stay within reach while reading -->
+  <div v-if="product && !loading" class="mbar" :class="{ show: !buyInView }" role="region" aria-label="Purchase" :aria-hidden="buyInView ? 'true' : null" :inert="buyInView ? '' : null">
+    <div class="mprice"><strong>{{ variant ? inrp(variant.price_paise) : '' }}</strong><span v-if="variant">{{ variant.size_label }}</span></div>
+    <button type="button" class="btn btn-sun btn-sm" :disabled="!canBuy || busy" @click="addToCart">{{ canBuy ? 'Add to Cart' : 'Out of stock' }}</button>
+    <button v-if="canBuy" type="button" class="btn btn-sm" @click="buyNow">Buy Now</button>
   </div>
-</div>
-<WhatsAppFab />
+
+  <SiteFooter />
+  <WhatsAppFab :raised="!!product && !buyInView" />
 </div>
 </template>
 
@@ -70,13 +122,15 @@ import AnnouncementBar from '@/components/AnnouncementBar.vue'
 import SiteHeader from '@/components/SiteHeader.vue'
 import SiteFooter from '@/components/SiteFooter.vue'
 import WhatsAppFab from '@/components/WhatsAppFab.vue'
+import ProductCard from '@/components/ProductCard.vue'
 import { useCartStore } from '@/stores/cart'
 import { useRouter, useRoute } from 'vue-router'
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onBeforeUnmount } from 'vue'
 import { useToastStore } from '@/stores/toast'
 import { inrp } from '@/utils/format'
 import { apiError } from '@/services/api'
 import * as catalogue from '@/services/catalogueService'
+import { hoverPhoto } from '@/content/productPhotos'
 import * as shippingService from '@/services/shippingService'
 
 const cart = useCartStore()
@@ -95,9 +149,26 @@ const pinState = ref('')
 const pinInfo = ref({})
 const pinMsg = ref('')
 const busy = ref(false)
+const related = ref([])
+const zooming = ref(false)
+
+const usageSteps = computed(() => String(product.value?.how_to_use || '').split(/\n+/).map((s) => s.trim()).filter(Boolean))
+
+// phones: the bottom purchase bar appears only once the main buttons have scrolled out of view
+const buyEl = ref(null)
+const buyInView = ref(true)
+let buyObs = null
+watch(buyEl, (el) => {
+  buyObs && buyObs.disconnect()
+  if (!el || typeof IntersectionObserver === 'undefined') { buyInView.value = !!el; return }
+  buyObs = new IntersectionObserver(([e]) => { buyInView.value = e.isIntersecting || e.boundingClientRect.bottom > 0 })   // hidden until scrolled past
+  buyObs.observe(el)
+})
+onBeforeUnmount(() => buyObs && buyObs.disconnect())
+const zoomOrigin = ref('50% 50%')
 
 const variants = computed(() => (product.value?.variants || []).filter((v) => v.is_active !== false))
-const thumbs = computed(() => (product.value?.images?.length ? product.value.images : [product.value?.image_url].filter(Boolean)).map((img) => ({ img, alt: `${product.value.name} pack` })))
+const thumbs = computed(() => [...new Set([...(product.value?.images?.length ? product.value.images : [product.value?.image_url]), hoverPhoto(product.value)].filter(Boolean))].map((img) => ({ img, alt: product.value.name })))
 const canBuy = computed(() => !!variant.value && variant.value.in_stock && variant.value.stock > 0)
 const maxQty = computed(() => Math.max(1, Math.min(20, variant.value ? variant.value.stock : 20)))
 const savePct = computed(() => {
@@ -107,9 +178,21 @@ const savePct = computed(() => {
 const stdDays = computed(() => pinInfo.value.methods?.find((m) => m.code === 'standard')?.days || '3 to 5')
 
 function pickVariant(v) { variant.value = v; qty.value = Math.min(qty.value, Math.max(1, Math.min(20, v.stock))) }
+function onZoom(e) {
+  const r = e.currentTarget.getBoundingClientRect()
+  zoomOrigin.value = `${((e.clientX - r.left) / r.width) * 100}% ${((e.clientY - r.top) / r.height) * 100}%`
+}
+
+async function loadRelated(p) {
+  related.value = []
+  try {
+    const { items } = await catalogue.products({ category: p.category.slug, per_page: 5 })
+    if (product.value && product.value.slug === p.slug) related.value = items.filter((x) => x.slug !== p.slug).slice(0, 4)
+  } catch (e) { /* the section is optional; nothing to show */ }
+}
 
 async function load() {
-  loading.value = true; loadError.value = ''; product.value = null
+  loading.value = true; loadError.value = ''; product.value = null; related.value = []
   try {
     const p = await catalogue.product(route.params.slug)
     product.value = p
@@ -117,6 +200,7 @@ async function load() {
     qty.value = 1
     mainImg.value = p.image_url || p.images?.[0] || ''
     pin.value = ''; pinState.value = ''
+    loadRelated(p)
   } catch (e) {
     const er = apiError(e)
     if (er.status !== 404) loadError.value = er.message
@@ -151,36 +235,106 @@ async function checkPin() {
 </script>
 
 <style scoped>
-.dcroot{--bg:#F8F7EF;--surface:#fff;--ink:#14301C;--muted:#566659;--line:#E6E2D0;--green:#0B5D1E;--leaf:#9ACD32;--mango:#FFB400;--amber:#9A5B00;--tint:#EAF3DD;--sun:#FFF1CC}
-.dcroot{margin:0;background:var(--bg);color:var(--ink);font-family:'Plus Jakarta Sans','Noto Sans Devanagari',system-ui,sans-serif}
-a{color:var(--ink);text-decoration:none}a:hover{color:var(--green)}
-button{font-family:inherit;cursor:pointer}
-.card{background:var(--surface);border:1px solid var(--line);box-shadow:0 10px 30px rgba(20,48,28,0.06)}
-.btn{background:var(--green);color:#fff;border:none;border-radius:999px;padding:12px 28px;font-size:15px;font-weight:600;min-height:44px;display:inline-flex;align-items:center;justify-content:center;gap:8px}
-.btn:hover{background:#08481a;color:#fff}
-.btn:disabled{opacity:.5;cursor:not-allowed}
-.btn-sun{background:var(--mango);color:var(--ink)}.btn-sun:hover{background:#ffc22e;color:var(--ink)}
-.btn-line{background:transparent;color:var(--ink);border:1.5px solid var(--ink);border-radius:999px;padding:11px 26px;font-size:15px;font-weight:600;min-height:44px;display:inline-flex;align-items:center;justify-content:center}
-.btn-line:hover{background:var(--ink);color:#fff}
-.pill{background:#fff;color:var(--ink);border:1.5px solid var(--line);border-radius:999px;padding:10px 22px;font-size:14px;font-weight:600;min-height:44px}
-.pill.on{border-color:var(--green);color:var(--green);background:var(--tint)}
-input{font-family:inherit}input::placeholder{color:#7b8a7e}
+.page { padding-bottom: 8px; }
+.crumbs { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; padding: 18px 0 22px; font-size: 13px; color: var(--muted); line-height: 1.6; }
+.crumbs a { display: inline-flex; align-items: center; min-height: 32px; }
+.crumbs a:hover { color: var(--forest); text-decoration: underline; }
+.crumbs [aria-current] { color: var(--ink); font-weight: 600; }
 
-/* ---- responsive ---- */
-img{max-width:100%}
-@media (max-width:600px){.wrap{padding-left:16px!important;padding-right:16px!important}}
+.pd { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 48px; align-items: start; }
+.sk-main { aspect-ratio: 1; border-radius: var(--r-lg); }
+.sk-info { display: flex; flex-direction: column; gap: 16px; }
 
-@media (max-width:900px){.pd{gap:36px!important}.pd-gal{flex-basis:100%!important;max-width:none!important}.pd-info{flex-basis:100%!important}}
-@media (max-width:600px){
-  .pd{gap:28px!important}
-  .pd-main{padding:14px!important;border-radius:32px!important}
-  .pd-mainbox{height:min(380px,92vw)!important;border-radius:22px!important}
-  .pd-thumbs{gap:10px!important}
-  .pd-thumbs .card{height:72px!important;border-radius:16px!important}
-  .pd-buy{gap:10px!important}
-  .pd-buy .btn{flex:1 1 auto;padding-left:20px;padding-right:20px}
-  .pd-pin{padding:18px!important}
-  .pd-trust{gap:10px 18px!important}
-  .pill{min-height:44px}
+/* gallery */
+.gal { position: sticky; top: 130px; min-width: 0; }
+.mainbox { position: relative; aspect-ratio: 1; overflow: hidden; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle at 50% 42%, #fff, var(--tint)); }
+.mainbox img { width: 100%; height: 100%; object-fit: cover; transition: transform .25s ease-out; }
+.sale { position: absolute; top: 14px; left: 14px; font-size: 12px; }
+@media (hover: hover) { .mainbox { cursor: zoom-in; } .mainbox.zooming img { transform: scale(1.9); } }
+.thumbs { display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 88px)); gap: 10px; margin-top: 12px; }
+.thumb { aspect-ratio: 1; padding: 0; border-radius: var(--r-md); border: 2px solid var(--line); background: #fff; display: flex; align-items: center; justify-content: center; overflow: hidden; transition: border-color .2s; }
+.thumb:hover { border-color: var(--leaf); }
+.thumb.on { border-color: var(--forest); }
+.thumb img { width: 100%; height: 100%; object-fit: cover; }
+
+/* info */
+.info { min-width: 0; }
+.catlink { text-transform: uppercase; letter-spacing: .6px; }
+.catlink:hover { background: var(--forest); color: #fff; }
+.info h1 { margin: 12px 0 0; font-size: clamp(28px, 4.2vw, 42px); font-weight: 800; line-height: 1.1; letter-spacing: -.9px; }
+.hindi { margin-top: 6px; font-size: 17px; color: var(--muted); }
+.price { margin-top: 20px; display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px 12px; }
+.now { font-size: clamp(30px, 4vw, 38px); font-weight: 800; color: var(--forest); }
+.was { font-size: 17px; color: #7A877E; text-decoration: line-through; }
+.save { font-size: 12px; }
+.tax { margin-top: 4px; font-size: 12px; color: var(--muted); }
+.desc { margin: 18px 0 22px; font-size: 15px; line-height: 1.8; color: var(--muted); max-width: 540px; }
+.lbl { font-size: 14px; font-weight: 700; margin-bottom: 10px; }
+.sizes { display: flex; flex-wrap: wrap; gap: 10px; }
+.pill.dim:not(.on) { color: #8A948C; }
+.stock { margin-top: 12px; font-size: 13px; font-weight: 700; }
+.stock.bad { color: var(--danger); } .stock.low { color: var(--amber); }
+
+.buy { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 24px; }
+.grow { flex: 1 1 150px; }
+.qty { display: inline-flex; align-items: center; height: 48px; border: 1.5px solid var(--line); border-radius: 999px; background: #fff; }
+.qty button { width: 46px; height: 46px; border: 0; background: none; color: var(--ink); font-size: 20px; border-radius: 50%; }
+.qty button:hover:not(:disabled) { color: var(--forest); background: var(--tint); }
+.qty button:disabled { opacity: .35; cursor: not-allowed; }
+.qty output { min-width: 30px; text-align: center; font-weight: 700; }
+
+.pin { margin-top: 28px; padding: 20px 22px; }
+.pin h2 { margin: 0 0 12px; font-size: 15px; font-weight: 800; }
+.pin form { display: flex; gap: 10px; }
+.pin input { flex: 1; min-width: 0; height: 46px; padding: 0 16px; border: 1px solid #CFCBB6; border-radius: 999px; background: #fff; color: var(--ink); font-size: 14px; }
+.pin input:focus { outline: none; border-color: var(--forest); box-shadow: 0 0 0 3px rgba(55, 146, 55, .28); }
+.pmsg { margin-top: 12px; font-size: 13px; font-weight: 600; color: var(--muted); }
+.pmsg.ok { color: #1F6B2A; } .pmsg.bad { color: var(--danger); }
+
+.trust { list-style: none; margin: 22px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 10px 22px; font-size: 13px; font-weight: 600; color: var(--muted); }
+.trust li { display: inline-flex; align-items: center; gap: 6px; }
+.trust svg { color: var(--leaf); }
+.ship { margin-top: 18px; border-top: 1px solid var(--line); }
+.ship summary { cursor: pointer; list-style: none; display: flex; justify-content: space-between; align-items: center; min-height: 48px; font-size: 14px; font-weight: 700; }
+.ship summary::-webkit-details-marker { display: none; }
+.ship summary::after { content: '+'; font-size: 22px; font-weight: 400; color: var(--forest); }
+.ship[open] summary::after { content: '\2212'; }
+.ship p { margin: 0 0 14px; font-size: 14px; line-height: 1.7; color: var(--muted); }
+.ship a { color: var(--forest); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+
+.rel { padding-top: 72px; }
+.state { padding: 56px 24px; text-align: center; }
+.state h1 { margin: 0; font-size: 32px; font-weight: 800; }
+.state p { margin: 12px 0 22px; color: var(--muted); }
+
+.steps { margin: 4px 0 0; padding-left: 20px; font-size: 14px; line-height: 1.7; color: var(--muted); }
+
+/* mobile purchase bar */
+.mbar { display: none; }
+
+@media (max-width: 900px) {
+  .pd { grid-template-columns: 1fr; gap: 28px; }
+  .gal { position: static; }
+  .mainbox { aspect-ratio: 1 / .9; }
+  .rel { padding-top: 56px; }
+  .mbar {
+    display: flex; align-items: center; gap: 8px; position: fixed; z-index: 55; left: 0; right: 0; bottom: 0;
+    padding: 10px var(--gutter) calc(10px + env(safe-area-inset-bottom, 0px)); background: rgba(255, 255, 255, .97);
+    border-top: 1px solid var(--line); box-shadow: 0 -8px 24px rgba(16, 61, 44, .1);
+    transform: translateY(110%); transition: transform .25s var(--ease);
+  }
+  .mbar.show { transform: none; }
+  .mprice { display: flex; flex-direction: column; margin-right: auto; line-height: 1.2; min-width: 0; }
+  .mprice strong { font-size: 18px; font-weight: 800; color: var(--forest); }
+  .mprice span { font-size: 12px; color: var(--muted); }
+  .buy .btn-sun.grow { flex: 1 1 0; min-width: 0; }   /* quantity + Add to Cart on one row */
+  .buy a.grow, .buy span.grow { flex-basis: 100%; }
 }
+/* keep the footer's last line clear of the fixed purchase bar */
+@media (max-width: 900px) { :deep(.foot) { padding-bottom: 72px; } }
+@media (max-width: 600px) {
+  .crumbs { padding: 14px 0 16px; }
+  .pin { padding: 16px; }
+}
+@media (pointer: coarse) { .crumbs a { min-height: 40px; } }
 </style>

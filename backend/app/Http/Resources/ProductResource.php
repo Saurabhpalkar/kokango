@@ -22,6 +22,8 @@ class ProductResource extends JsonResource
             'name' => $this->name,
             'hindi_name' => $this->hindi_name,
             'description' => $this->description,
+            'ingredients' => $this->ingredients,
+            'how_to_use' => $this->how_to_use,
             'image_url' => $imageUrl,
             'images' => $imageUrl ? [$imageUrl] : [],
             'badge' => $this->badge,

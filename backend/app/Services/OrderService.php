@@ -29,6 +29,8 @@ class OrderService
     public function __construct(
         private PaymentGatewayInterface $gateway,
         private ShippingService $shipping,
+        private OrderNotifier $notifier,
+        private MarketplaceService $marketplace,
     ) {
     }
 
@@ -66,13 +68,17 @@ class OrderService
      */
     public function markPaid(Payment $payment, array $gatewayData = []): Order
     {
-        $order = DB::transaction(function () use ($payment, $gatewayData) {
+        $firstTime = false;
+
+        $order = DB::transaction(function () use ($payment, $gatewayData, &$firstTime) {
             $p = Payment::whereKey($payment->id)->lockForUpdate()->firstOrFail();
             $order = Order::whereKey($p->order_id)->lockForUpdate()->firstOrFail();
 
             if (in_array($p->status, ['paid', 'refunded'], true)) {
                 return $order;
             }
+
+            $firstTime = true;
 
             $note = null;
             $newStatus = $order->status;
@@ -129,7 +135,40 @@ class OrderService
 
         Log::info('Order paid', ['order' => $order->order_no]);
 
-        return $order->fresh();
+        $order = $order->fresh();
+
+        // Marketplace items: each seller now sees its part of the order.
+        $this->marketplace->syncOrder($order);
+
+        // Tell the customer and the shop owner once, when the order becomes confirmed by payment.
+        if ($firstTime && $order->status === 'confirmed') {
+            $this->notifier->placed($order);
+        }
+
+        return $order;
+    }
+
+    /**
+     * Cash on Delivery: the courier handed over the parcel and collected the money.
+     * Marks the payment and the order as paid. Does nothing for online payments or when already paid.
+     */
+    public function collectCod(Order $order): void
+    {
+        DB::transaction(function () use ($order) {
+            $payment = Payment::where('order_id', $order->id)
+                ->where('gateway', 'cod')
+                ->where('status', 'pending')
+                ->latest('id')
+                ->lockForUpdate()
+                ->first();
+
+            if (! $payment) {
+                return;
+            }
+
+            $payment->forceFill(['status' => 'paid', 'method' => 'cod', 'paid_at' => now()])->save();
+            Order::whereKey($order->id)->update(['payment_status' => 'paid']);
+        });
     }
 
     public function markPaymentFailed(Order $order, ?string $reason = null): void
@@ -139,6 +178,11 @@ class OrderService
 
             // Never downgrade a paid / refunded order, and do nothing twice.
             if (in_array($o->payment_status, ['paid', 'refunded', 'failed'], true)) {
+                return;
+            }
+
+            // Cash on Delivery has no online payment that can fail; it is cancelled instead.
+            if ($o->isCod()) {
                 return;
             }
 
@@ -167,7 +211,10 @@ class OrderService
                 abort(409, 'Only paid payments can be refunded.');
             }
 
-            $result = $this->gateway->refund($p);
+            // Cash on Delivery has no gateway: the shop owner returns the cash by hand.
+            $result = $p->gateway === 'cod'
+                ? ['refund_id' => null, 'status' => 'manual']
+                : $this->gateway->refund($p);
 
             $payload = (array) $p->payload;
             $payload['refund'] = [
@@ -233,6 +280,8 @@ class OrderService
             $o->refresh();
             $o->forceFill(['status' => 'cancelled'])->save();
         });
+
+        $this->marketplace->syncOrder($order);
 
         return $order->fresh();
     }
@@ -310,7 +359,9 @@ class OrderService
 
     public function syncStatusFromShipment(Shipment $shipment): ?Order
     {
-        return DB::transaction(function () use ($shipment) {
+        $before = null;
+
+        $result = DB::transaction(function () use ($shipment, &$before) {
             $order = Order::whereKey($shipment->order_id)->lockForUpdate()->first();
             if (! $order) {
                 return null;
@@ -335,6 +386,8 @@ class OrderService
                 return $order;
             }
 
+            $before = $order->status;
+
             $new = null;
             if (in_array($status, self::SHIPPED_STATES, true)) {
                 $new = $order->status === 'delivered' ? null : 'shipped';
@@ -350,6 +403,34 @@ class OrderService
 
             return $order;
         });
+
+        if ($result) {
+            $result = $result->fresh();
+            $this->afterStatusChange($result, $before);
+        }
+
+        return $result;
+    }
+
+    /**
+     * Called after an order's status was changed by staff or the courier: collects Cash on Delivery
+     * money on delivery, and emails the customer when the order ships or is delivered.
+     */
+    public function afterStatusChange(Order $order, ?string $before): void
+    {
+        $this->marketplace->syncOrder($order);
+
+        if ($before === $order->status) {
+            return;
+        }
+
+        if ($order->status === 'delivered') {
+            $this->collectCod($order);
+            $order = $order->fresh();
+            $this->notifier->delivered($order);
+        } elseif ($order->status === 'shipped') {
+            $this->notifier->shipped($order);
+        }
     }
 
     // ------------------------------------------------------------------ timeline

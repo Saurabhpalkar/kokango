@@ -10,6 +10,7 @@ use App\Models\OrderItem;
 use App\Models\Payment;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Models\Shipment;
 use App\Models\User;
 use App\Services\Payment\PaymentGatewayInterface;
 use App\Services\Shipping\ShippingService;
@@ -98,6 +99,11 @@ class CheckoutService
     public function placeOrder(array $data, Cart $cart, ?User $user = null): array
     {
         $method = $data['shipping_method'] ?? 'standard';
+        $payMethod = ($data['payment_method'] ?? 'online') === 'cod' ? 'cod' : 'online';
+
+        if ($payMethod === 'cod' && ! config('kokango.cod.enabled')) {
+            abort(409, 'Cash on Delivery is not available right now. Please pay online.');
+        }
 
         $cart->load('items');
         if ($cart->items->isEmpty()) {
@@ -113,7 +119,7 @@ class CheckoutService
             abort(409, 'Sorry, we do not deliver to this pincode yet.');
         }
 
-        return DB::transaction(function () use ($data, $cart, $user, $method, $address, $customer) {
+        return DB::transaction(function () use ($data, $cart, $user, $method, $payMethod, $address, $customer) {
             $cartItems = CartItem::where('cart_id', $cart->id)->get();
             if ($cartItems->isEmpty()) {
                 abort(409, 'Your cart is empty.');
@@ -151,6 +157,11 @@ class CheckoutService
 
             $totals = $this->pricing->totals($subtotal, $method);
 
+            $codMax = (int) config('kokango.cod.max_paise');
+            if ($payMethod === 'cod' && $codMax > 0 && $totals['total_paise'] > $codMax) {
+                abort(409, 'Cash on Delivery is available for orders up to Rs '.number_format($codMax / 100).'. Please pay online.');
+            }
+
             $order = new Order();
             $order->forceFill([
                 'order_no' => 'TMP-'.Str::random(24),
@@ -172,7 +183,8 @@ class CheckoutService
                 'tax_paise' => $totals['tax_paise'],
                 'discount_paise' => $totals['discount_paise'],
                 'total_paise' => $totals['total_paise'],
-                'status' => 'pending',
+                // A Cash on Delivery order is confirmed straight away; it is paid when the parcel is delivered.
+                'status' => $payMethod === 'cod' ? 'confirmed' : 'pending',
                 'payment_status' => 'pending',
                 'notes' => $data['notes'] ?? null,
                 'placed_at' => now(),
@@ -192,6 +204,7 @@ class CheckoutService
                     'order_id' => $order->id,
                     'product_id' => $product->id,
                     'product_variant_id' => $variant->id,
+                    'vendor_id' => $product->vendor_id,
                     'product_slug' => $product->slug,
                     'name' => $product->name,
                     'size_label' => $variant->size_label,
@@ -203,6 +216,44 @@ class CheckoutService
 
                 $variant->forceFill(['stock' => $variant->stock - $qty])->save();
                 $this->orders->movement($variant, -$qty, 'Order '.$order->order_no, $user?->id);
+            }
+
+            if ($payMethod === 'cod') {
+                $payment = new Payment();
+                $payment->forceFill([
+                    'order_id' => $order->id,
+                    'gateway' => 'cod',
+                    'gateway_order_id' => null,
+                    'method' => 'cod',
+                    'amount_paise' => $order->total_paise,
+                    'currency' => 'INR',
+                    'status' => 'pending',
+                    'payload' => ['driver' => 'cod'],
+                ])->save();
+
+                (new Shipment())->forceFill([
+                    'order_id' => $order->id,
+                    'provider' => $this->shipping->providerName(),
+                    'status' => 'pending',
+                ])->save();
+
+                $order->load(['items', 'payment', 'shipment']);
+
+                return [
+                    'order' => $order,
+                    'payment' => [
+                        'gateway' => 'cod',
+                        'gateway_order_id' => null,
+                        'key_id' => null,
+                        'amount_paise' => (int) $order->total_paise,
+                        'currency' => 'INR',
+                        'prefill' => [
+                            'name' => $customer['name'],
+                            'email' => $customer['email'],
+                            'phone' => $customer['phone'],
+                        ],
+                    ],
+                ];
             }
 
             $gatewayOrder = $this->gateway->createOrder($order);

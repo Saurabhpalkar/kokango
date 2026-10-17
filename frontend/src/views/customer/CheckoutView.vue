@@ -1,7 +1,6 @@
 <template>
 <div class="dcroot">
-<div style="width:100%;position:relative;overflow:hidden;background:var(--bg)">
-  <div style="position:absolute;top:-220px;right:-160px;width:520px;height:520px;border-radius:50%;background:var(--sun)"></div>
+<div style="width:100%;background:var(--bg)">
   <div class="wrap" style="position:relative;max-width:1280px;margin:0 auto;padding:0 32px;box-sizing:border-box">
 
     <SiteHeader variant="minimal">
@@ -16,18 +15,18 @@
       <span style="display:flex;align-items:center;gap:8px;color:var(--muted)"><span style="width:30px;height:30px;border-radius:50%;border:1.5px solid var(--line);background:#fff;display:inline-flex;align-items:center;justify-content:center">3</span>Payment</span>
     </div>
 
-    <div v-if="!cart.loaded" class="card pad" style="border-radius:36px;padding:56px 32px;box-sizing:border-box;text-align:center;max-width:640px;margin:0 auto;color:var(--muted)">Loading your cart...</div>
+    <div v-if="!cart.loaded" class="card pad" style="border-radius:16px;padding:56px 32px;box-sizing:border-box;text-align:center;max-width:640px;margin:0 auto;color:var(--muted)">Loading your cart...</div>
 
-    <div v-else-if="!cart.items.length" class="card pad" style="border-radius:36px;padding:56px 32px;box-sizing:border-box;text-align:center;max-width:640px;margin:0 auto">
+    <div v-else-if="!cart.items.length" class="card pad" style="border-radius:16px;padding:56px 32px;box-sizing:border-box;text-align:center;max-width:640px;margin:0 auto">
       <div style="font-size:22px;font-weight:800">Your cart is empty</div>
       <p style="margin:10px 0 24px;font-size:15px;color:var(--muted)">Add something from our shop before checking out.</p>
-      <a href="/products" class="btn" style="background:var(--mango);color:var(--ink)">Browse products</a>
+      <a href="/products" class="btn btn-sun">Browse products</a>
     </div>
 
     <form v-else novalidate @submit.prevent="submit">
     <section class="split" style="display:flex;flex-wrap:wrap;gap:32px;align-items:flex-start">
       <div class="split-main" style="flex:1 1 640px;display:flex;flex-direction:column;gap:24px">
-        <div class="card pad" style="border-radius:36px;padding:32px;box-sizing:border-box">
+        <div class="card pad" style="border-radius:16px;padding:32px;box-sizing:border-box">
           <h2 style="margin:0 0 20px;font-size:22px;font-weight:800">Shipping Address</h2>
           <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(240px,100%),1fr));gap:16px">
             <label v-if="auth.isLoggedIn && saved.length" class="field" style="grid-column:1/-1">Saved addresses<select v-model="savedId" @change="applySaved"><option value="">Enter a new address</option><option v-for="a in saved" :key="a.id" :value="String(a.id)">{{ a.name }} &middot; {{ a.line1 }}, {{ a.city }} {{ a.pincode }}{{ a.is_default ? ' (default)' : '' }}</option></select></label>
@@ -41,23 +40,26 @@
             <label class="field">State<input v-model="f.state" placeholder="Maharashtra" :class="{ bad: errors.state }"><span v-if="errors.state" class="err" role="alert">{{ errors.state }}</span></label>
             <label class="field">Country<input v-model="f.country" readonly></label>
           </div>
-          <label v-if="auth.isLoggedIn && !savedId" style="min-height:44px;display:flex;gap:10px;align-items:center;margin-top:18px;font-size:14px;font-weight:500;color:var(--muted)"><input type="checkbox" v-model="saveAddr" style="accent-color:#0B5D1E;width:18px;height:18px">Save this address to my account</label>
+          <label v-if="auth.isLoggedIn && !savedId" style="min-height:44px;display:flex;gap:10px;align-items:center;margin-top:18px;font-size:14px;font-weight:500;color:var(--muted)"><input type="checkbox" v-model="saveAddr" style="accent-color:#103D2C;width:18px;height:18px">Save this address to my account</label>
         </div>
 
-        <div class="card pad" style="border-radius:36px;padding:32px;box-sizing:border-box">
+        <div class="card pad" style="border-radius:16px;padding:32px;box-sizing:border-box">
           <h2 style="margin:0 0 20px;font-size:22px;font-weight:800">Shipping Method</h2>
           <div style="display:flex;flex-direction:column;gap:12px">
-            <label v-for="m in methodList" :key="m.code" class="opt" :class="{ on: method === m.code }"><input type="radio" name="ship" :value="m.code" v-model="method" style="accent-color:#0B5D1E"><span style="flex:1;min-width:0;font-weight:600">{{ m.label }} <span style="color:var(--muted);font-weight:500">&middot; {{ m.days }} days</span></span><span style="font-weight:800">{{ m.price_paise === 0 ? 'Free' : inrp(m.price_paise) }}</span></label>
+            <label v-for="m in methodList" :key="m.code" class="opt" :class="{ on: method === m.code }"><input type="radio" name="ship" :value="m.code" v-model="method" style="accent-color:#103D2C"><span style="flex:1;min-width:0;font-weight:600">{{ m.label }} <span style="color:var(--muted);font-weight:500">&middot; {{ m.days }} days</span></span><span style="font-weight:800">{{ m.price_paise === 0 ? 'Free' : inrp(m.price_paise) }}</span></label>
           </div>
         </div>
 
-        <div class="card pad" style="border-radius:36px;padding:32px;box-sizing:border-box">
+        <div class="card pad" style="border-radius:16px;padding:32px;box-sizing:border-box">
           <h2 style="margin:0 0 20px;font-size:22px;font-weight:800">Payment</h2>
-          <label class="opt on"><input type="radio" name="pay" checked style="accent-color:#0B5D1E"><span style="flex:1;min-width:0;font-weight:600">Pay online with Razorpay <span style="color:var(--muted);font-weight:500">&middot; UPI, cards, netbanking, wallets</span></span></label>
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <label class="opt" :class="{ on: payMethod === 'online' }"><input type="radio" name="pay" value="online" v-model="payMethod" style="accent-color:#103D2C"><span style="flex:1;min-width:0;font-weight:600">Pay online with Razorpay <span style="color:var(--muted);font-weight:500">&middot; UPI, cards, netbanking, wallets</span></span></label>
+            <label v-if="codAvailable" class="opt" :class="{ on: payMethod === 'cod' }"><input type="radio" name="pay" value="cod" v-model="payMethod" style="accent-color:#103D2C"><span style="flex:1;min-width:0;font-weight:600">Cash on Delivery <span style="color:var(--muted);font-weight:500">&middot; pay in cash when your parcel arrives</span></span></label>
+          </div>
         </div>
       </div>
 
-      <aside class="card split-side pad" style="flex:0 0 390px;border-radius:40px;padding:32px;box-sizing:border-box">
+      <aside class="card split-side pad" style="flex:0 0 390px;border-radius:20px;padding:32px;box-sizing:border-box">
         <h2 style="margin:0 0 16px;font-size:22px;font-weight:800">Order Summary</h2>
         <template v-for="it in cart.items" :key="it.id">
           <div style="display:flex;align-items:center;gap:14px;padding:10px 0">
@@ -72,7 +74,7 @@
           <div style="display:flex;justify-content:space-between;padding:8px 0;font-size:14px;color:var(--muted)"><span>Tax (GST 5%)</span><span style="color:var(--ink);font-weight:600">{{ inrp(sum.tax) }}</span></div>
           <div style="display:flex;justify-content:space-between;padding:16px 0 20px;font-size:21px;font-weight:800"><span>Total</span><span style="color:var(--green)">{{ inrp(sum.total) }}</span></div>
         </div>
-        <button type="submit" class="btn paybtn" :disabled="processing" style="display:flex;width:100%;box-sizing:border-box;background:var(--mango);color:var(--ink)">{{ processing ? 'Processing payment…' : `Pay ${inrp(sum.total)} with Razorpay` }}</button>
+        <button type="submit" class="btn paybtn btn-sun" :disabled="processing" style="display:flex;width:100%;box-sizing:border-box">{{ processing ? (payMethod === 'cod' ? 'Placing your order…' : 'Processing payment…') : (payMethod === 'cod' ? `Place order · pay ${inrp(sum.total)} on delivery` : `Pay ${inrp(sum.total)} with Razorpay`) }}</button>
         <p v-if="serverError" class="err" role="alert" style="margin:12px 0 0;text-align:center;font-size:13px">{{ serverError }}</p>
         <p v-if="hasErrors" class="err" role="alert" style="margin:12px 0 0;text-align:center">Please fix the highlighted fields above.</p>
         <p style="margin:14px 0 0;font-size:12px;color:var(--muted);text-align:center">By placing your order you agree to our <a href="/policy/terms" style="color:inherit">Terms</a> and <a href="/policy/refund" style="color:inherit">Refund Policy</a>.</p>
@@ -110,6 +112,7 @@ const f = reactive({
   line: '', city: '', district: '', state: '', country: 'India',
 })
 const method = ref('standard')
+const payMethod = ref('online')
 const errors = reactive({})
 const processing = ref(false)
 const serverError = ref('')
@@ -138,6 +141,13 @@ watch(methodList, (list) => { if (!list.some((m) => m.code === method.value)) me
 const sum = computed(() => quote.value
   ? { subtotal: quote.value.subtotal_paise, shipping: quote.value.shipping_paise, tax: quote.value.tax_paise, total: quote.value.total_paise }
   : { subtotal: cart.subtotalPaise, shipping: cart.shippingPaise, tax: cart.taxPaise, total: cart.totalPaise })
+// Cash on Delivery is offered when the shop allows it and the order is not above the shop's COD limit.
+const codAvailable = computed(() => {
+  const st = settings.value
+  if (!st || !st.cod_enabled) return false
+  return !st.cod_max_paise || sum.value.total <= st.cod_max_paise
+})
+watch(codAvailable, (ok) => { if (!ok && payMethod.value === 'cod') payMethod.value = 'online' })
 let quoteSeq = 0
 async function refreshQuote() {
   if (!cart.items.length) { quote.value = null; return }
@@ -261,6 +271,7 @@ async function submit() {
   const body = {
     address: { name: f.name.trim(), phone, line1: f.line.trim(), line2: f.district.trim() || undefined, city: f.city.trim(), state: f.state.trim(), pincode: f.pincode.trim() },
     shipping_method: method.value,
+    payment_method: payMethod.value === 'cod' && codAvailable.value ? 'cod' : 'online',
   }
   if (!auth.isLoggedIn) body.customer = { name: f.name.trim(), email: f.email.trim(), phone }
   let order = null
@@ -268,7 +279,8 @@ async function submit() {
     const res = await checkoutService.placeOrder(body)
     order = res.order
     let paid
-    if (res.payment.gateway === 'razorpay') paid = await payWithRazorpay(order, res.payment)
+    if (res.payment.gateway === 'cod') paid = order // Cash on Delivery: nothing to pay now
+    else if (res.payment.gateway === 'razorpay') paid = await payWithRazorpay(order, res.payment)
     else {
       await sleep(1000) // pretend the payment takes a second
       paid = await checkoutService.verify({ order_no: order.order_no, token: order.token, gateway_order_id: res.payment.gateway_order_id, gateway_payment_id: 'pay_fake_' + Math.random().toString(36).slice(2, 12), signature: 'fake' })
@@ -277,6 +289,7 @@ async function submit() {
     if (auth.isLoggedIn && saveAddr.value && !savedId.value) {
       try { await addressService.create({ ...body.address, is_default: !saved.value.length }) } catch (e) { /* the order is placed; ignore */ }
     }
+    catalogue.clearCatalogueCache()
     await cart.load()
     await router.push(`/order-confirmation?order=${paid?.order_no || order.order_no}`)
   } catch (e) {
@@ -293,26 +306,6 @@ async function submit() {
 </script>
 
 <style scoped>
-.dcroot{--bg:#F8F7EF;--surface:#fff;--ink:#14301C;--muted:#566659;--line:#E6E2D0;--green:#0B5D1E;--leaf:#9ACD32;--mango:#FFB400;--amber:#9A5B00;--tint:#EAF3DD;--sun:#FFF1CC}
-.dcroot{margin:0;background:var(--bg);color:var(--ink);font-family:'Plus Jakarta Sans','Noto Sans Devanagari',system-ui,sans-serif}
-a{color:var(--ink);text-decoration:none}a:hover{color:var(--green)}
-button{font-family:inherit;cursor:pointer}
-.card{background:var(--surface);border:1px solid var(--line);box-shadow:0 10px 30px rgba(20,48,28,0.06)}
-.btn{background:var(--green);color:#fff;border:none;border-radius:999px;padding:12px 28px;font-size:15px;font-weight:600;min-height:44px;display:inline-flex;align-items:center;justify-content:center;gap:8px}
-.btn:hover{background:#08481a;color:#fff}
-.field{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--muted)}
-.field input{height:48px;box-sizing:border-box;background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:0 16px;color:var(--ink);font-family:inherit;font-size:14px;font-weight:500}
-.field select{height:48px;box-sizing:border-box;background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:0 16px;color:var(--ink);font-family:inherit;font-size:14px;font-weight:500}
-.hint{font-size:12px;font-weight:600;color:var(--muted);margin:0}
-.hint.ok{color:var(--green)}
-.field input[readonly]{opacity:.8}
-.field input:focus{outline:2px solid var(--green);outline-offset:1px}
-.field input.bad{border-color:#C0392B}
-.err{font-size:12px;font-weight:600;color:#C0392B;margin:0}
-.btn:disabled{opacity:.7;cursor:progress}
-input::placeholder{color:#8a948c}
-.opt{display:flex;align-items:center;gap:14px;padding:16px 20px;border-radius:20px;border:1.5px solid var(--line);cursor:pointer;font-size:14px;background:#fff}
-.opt.on{border-color:var(--green);background:var(--tint)}
 @media (max-width:900px){
 .split{gap:20px!important}
 .split>.split-main{flex:1 1 100%!important;min-width:0!important}
@@ -322,12 +315,11 @@ input::placeholder{color:#8a948c}
 @media (max-width:600px){
 .wrap{padding-left:16px!important;padding-right:16px!important}
 .ph1{font-size:30px!important;letter-spacing:-.5px!important;margin:16px 0 20px!important;overflow-wrap:anywhere}
-.card{border-radius:24px!important}
+.card{border-radius:14px!important}
 .pad{padding:20px!important}
 .stepbar{gap:8px!important;font-size:13px!important;margin:12px 0 24px!important;flex-wrap:nowrap!important}
 .stsp{width:14px!important;flex:0 1 14px}
 .stepbar>span:not(.stsp){gap:6px!important}
-.opt{padding:14px 16px!important;gap:12px!important;border-radius:18px!important}
 .paybtn{height:auto;padding-top:10px;padding-bottom:10px;text-align:center;line-height:1.3}
 }
 @media (max-width:360px){.stepbar{font-size:12px!important}.stsp{width:8px!important;flex-basis:8px}}

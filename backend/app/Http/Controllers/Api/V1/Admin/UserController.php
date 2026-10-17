@@ -84,7 +84,8 @@ class UserController extends Controller
     public function roles(): JsonResponse
     {
         return response()->json([
-            'data' => Role::query()->where('guard_name', 'web')->orderBy('name')->pluck('name')->values(),
+            // Seller accounts are made from Marketplace > Vendors (they need a store), not from here.
+            'data' => Role::query()->where('guard_name', 'web')->where('name', '!=', 'vendor')->orderBy('name')->pluck('name')->values(),
         ]);
     }
 }

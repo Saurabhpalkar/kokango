@@ -4,12 +4,15 @@ use App\Http\Controllers\Api\V1\Admin\CategoryController as AdminCategoryControl
 use App\Http\Controllers\Api\V1\Admin\CustomerController as AdminCustomerController;
 use App\Http\Controllers\Api\V1\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Api\V1\Admin\InventoryController as AdminInventoryController;
+use App\Http\Controllers\Api\V1\Admin\MarketplaceController as AdminMarketplaceController;
 use App\Http\Controllers\Api\V1\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Api\V1\Admin\PaymentController as AdminPaymentController;
+use App\Http\Controllers\Api\V1\Admin\ProductApprovalController as AdminProductApprovalController;
 use App\Http\Controllers\Api\V1\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Api\V1\Admin\SettingController as AdminSettingController;
 use App\Http\Controllers\Api\V1\Admin\ShipmentController as AdminShipmentController;
 use App\Http\Controllers\Api\V1\Admin\UserController as AdminUserController;
+use App\Http\Controllers\Api\V1\Admin\VendorController as AdminVendorController;
 use App\Http\Controllers\Api\V1\Auth\AuthController;
 use App\Http\Controllers\Api\V1\Customer\AddressController;
 use App\Http\Controllers\Api\V1\Customer\CartController;
@@ -19,6 +22,10 @@ use App\Http\Controllers\Api\V1\Customer\OrderController;
 use App\Http\Controllers\Api\V1\Customer\PaymentController;
 use App\Http\Controllers\Api\V1\Customer\ShipmentController;
 use App\Http\Controllers\Api\V1\Customer\ShippingController;
+use App\Http\Controllers\Api\V1\Vendor\VendorAuthController;
+use App\Http\Controllers\Api\V1\Vendor\VendorOrderController;
+use App\Http\Controllers\Api\V1\Vendor\VendorPanelController;
+use App\Http\Controllers\Api\V1\Vendor\VendorProductController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -134,5 +141,58 @@ Route::middleware(['throttle:api', 'active'])->group(function () {
         Route::post('/users', [AdminUserController::class, 'store']);
         Route::put('/users/{id}', [AdminUserController::class, 'update'])->whereNumber('id');
         Route::get('/roles', [AdminUserController::class, 'roles']);
+
+        // Marketplace (sellers, listing reviews, commission and payouts)
+        Route::get('/marketplace/overview', [AdminMarketplaceController::class, 'overview']);
+        Route::get('/marketplace/settings', [AdminMarketplaceController::class, 'settings']);
+        Route::put('/marketplace/settings', [AdminMarketplaceController::class, 'saveSettings']);
+
+        Route::get('/vendors', [AdminVendorController::class, 'index']);
+        Route::post('/vendors', [AdminVendorController::class, 'store']);
+        Route::get('/vendors/{id}', [AdminVendorController::class, 'show'])->whereNumber('id');
+        Route::put('/vendors/{id}', [AdminVendorController::class, 'update'])->whereNumber('id');
+        Route::post('/vendors/{id}/{action}', [AdminVendorController::class, 'act'])
+            ->whereNumber('id')->whereIn('action', ['approve', 'reject', 'suspend', 'reactivate']);
+
+        Route::get('/product-approvals', [AdminProductApprovalController::class, 'index']);
+        Route::post('/product-approvals/{id}/{action}', [AdminProductApprovalController::class, 'act'])
+            ->whereNumber('id')->whereIn('action', ['approve', 'reject', 'unpublish']);
+
+        Route::get('/vendor-payouts', [AdminMarketplaceController::class, 'payouts']);
+        Route::post('/vendor-payouts', [AdminMarketplaceController::class, 'createPayout']);
+        Route::post('/vendor-payouts/{id}/status', [AdminMarketplaceController::class, 'payoutStatus'])->whereNumber('id');
+    });
+
+    // ---- Vendor (seller) panel ---------------------------------------------
+    Route::prefix('vendor')->group(function () {
+        Route::middleware('throttle:auth')->group(function () {
+            Route::post('/auth/register', [VendorAuthController::class, 'register']);
+            Route::post('/auth/login', [VendorAuthController::class, 'login']);
+        });
+
+        Route::middleware(['auth:sanctum', 'vendor'])->group(function () {
+            Route::get('/auth/me', [VendorAuthController::class, 'me']);
+            Route::post('/auth/logout', [VendorAuthController::class, 'logout']);
+
+            Route::get('/dashboard', [VendorPanelController::class, 'dashboard']);
+
+            Route::get('/products', [VendorProductController::class, 'index']);
+            Route::post('/products', [VendorProductController::class, 'store']);
+            Route::get('/products/{id}', [VendorProductController::class, 'show'])->whereNumber('id');
+            Route::put('/products/{id}', [VendorProductController::class, 'update'])->whereNumber('id');
+            Route::delete('/products/{id}', [VendorProductController::class, 'destroy'])->whereNumber('id');
+
+            Route::get('/orders', [VendorOrderController::class, 'index']);
+            Route::get('/orders/{orderNo}', [VendorOrderController::class, 'show']);
+            Route::put('/orders/{orderNo}/status', [VendorOrderController::class, 'updateStatus']);
+
+            Route::get('/inventory', [VendorPanelController::class, 'inventory']);
+            Route::post('/inventory/{variantId}/adjust', [VendorPanelController::class, 'adjust'])->whereNumber('variantId');
+
+            Route::get('/payouts', [VendorPanelController::class, 'payouts']);
+
+            Route::get('/store', [VendorPanelController::class, 'store']);
+            Route::put('/store', [VendorPanelController::class, 'updateStore']);
+        });
     });
 });

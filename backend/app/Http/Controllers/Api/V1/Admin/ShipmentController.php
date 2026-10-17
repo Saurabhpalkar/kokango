@@ -46,7 +46,7 @@ class ShipmentController extends Controller
         $shipment = DB::transaction(function () use ($order) {
             $o = Order::whereKey($order->id)->lockForUpdate()->firstOrFail();
 
-            if ($o->payment_status !== 'paid') {
+            if ($o->payment_status !== 'paid' && ! $o->isCod()) {
                 abort(409, 'This order has not been paid yet.');
             }
             if ($o->status === 'cancelled') {

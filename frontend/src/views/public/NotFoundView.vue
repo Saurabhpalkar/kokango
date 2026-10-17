@@ -1,9 +1,7 @@
 <template>
 <div class="dcroot">
-<div style="width:100%;position:relative;overflow:hidden;background:var(--bg)">
+<div style="width:100%;background:var(--bg)">
   <AnnouncementBar />
-  <div style="position:absolute;top:-200px;right:-140px;width:520px;height:520px;border-radius:50%;background:var(--sun)"></div>
-  <div style="position:absolute;top:480px;left:-240px;width:460px;height:460px;border-radius:50%;background:var(--tint)"></div>
   <div class="wrap" style="position:relative;max-width:1280px;margin:0 auto;padding:0 32px;box-sizing:border-box">
 
     <SiteHeader />
@@ -36,15 +34,6 @@ import WhatsAppFab from '@/components/WhatsAppFab.vue'
 </script>
 
 <style scoped>
-.dcroot{--bg:#F8F7EF;--surface:#fff;--ink:#14301C;--muted:#566659;--line:#E6E2D0;--green:#0B5D1E;--leaf:#9ACD32;--mango:#FFB400;--amber:#9A5B00;--tint:#EAF3DD;--sun:#FFF1CC}
-.dcroot{margin:0;background:var(--bg);color:var(--ink);font-family:'Plus Jakarta Sans','Noto Sans Devanagari',system-ui,sans-serif}
-a{color:var(--ink);text-decoration:none}a:hover{color:var(--green)}
-button{font-family:inherit;cursor:pointer}
-.card{background:var(--surface);border:1px solid var(--line);box-shadow:0 10px 30px rgba(20,48,28,0.06)}
-.btn{background:var(--green);color:#fff;border:none;border-radius:999px;padding:12px 28px;font-size:15px;font-weight:600;min-height:44px;display:inline-flex;align-items:center;justify-content:center}
-.btn:hover{background:#08481a;color:#fff}
-.btn-line{background:transparent;color:var(--ink);border:1.5px solid var(--ink);border-radius:999px;padding:11px 26px;font-size:15px;font-weight:600;min-height:44px;display:inline-flex;align-items:center;justify-content:center}
-.btn-line:hover{background:var(--ink);color:#fff}
 
 /* ---- responsive ---- */
 img{max-width:100%}

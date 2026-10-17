@@ -7,7 +7,7 @@
 
   <div v-if="error" class="errbox" role="alert"><span>{{ error }}</span><button type="button" @click="load">Retry</button></div>
 
-  <div class="card" style="border-radius:30px;padding:16px 26px">
+  <div class="card" style="border-radius:18px;padding:16px 26px">
     <div style="overflow-x:auto">
     <table class="rt" style="width:100%;border-collapse:collapse;min-width:820px">
       <thead><tr><th>PRODUCT</th><th>VARIANT</th><th>SKU</th><th>STOCK</th><th>SET STOCK</th><th>REASON</th><th></th></tr></thead>
@@ -16,7 +16,7 @@
           <td data-label="Product"><div style="display:flex;align-items:center;gap:12px"><div style="flex:0 0 48px;height:48px;border-radius:12px;background:var(--tint);display:flex;align-items:center;justify-content:center;overflow:hidden"><img v-if="r.image_url" :src="r.image_url" alt="" style="height:100%;width:auto;object-fit:contain"></div><span style="font-weight:700">{{ r.product_name }}</span></div></td>
           <td data-label="Variant">{{ r.size_label }}</td>
           <td data-label="SKU" style="color:var(--muted);white-space:nowrap">{{ r.sku }}</td>
-          <td data-label="Stock"><span :style="`font-weight:800;color:${r.low ? '#B3261E' : 'var(--ink)'}`">{{ r.stock }}</span> <span v-if="r.low" class="badge" style="background:#FBE3E1;color:#B3261E;margin-left:6px">Low stock</span></td>
+          <td data-label="Stock"><span :style="`font-weight:800;color:${r.low ? 'var(--danger)' : 'var(--ink)'}`">{{ r.stock }}</span> <span v-if="r.low" class="badge" style="background:var(--danger-bg);color:var(--danger);margin-left:6px">Low stock</span></td>
           <td data-label="Set Stock">
             <div style="display:flex;gap:6px;align-items:center">
               <button class="ghost" style="min-width:38px;padding:6px 0" :aria-label="'Decrease ' + r.product_name + ' ' + r.size_label" @click="r.edit = Math.max(0, (Number(r.edit) || 0) - 1)">&minus;</button>

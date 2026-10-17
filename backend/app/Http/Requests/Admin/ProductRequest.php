@@ -19,6 +19,8 @@ class ProductRequest extends FormRequest
             'hindi_name' => ['nullable', 'string', 'max:255'],
             'category_id' => ['required', 'integer', 'exists:categories,id'],
             'description' => ['nullable', 'string', 'max:5000'],
+            'ingredients' => ['nullable', 'string', 'max:2000'],
+            'how_to_use' => ['nullable', 'string', 'max:3000'],
             'is_active' => ['sometimes', 'boolean'],
             // https URL, a path served by the frontend ("/images/x.png") or one of our stored files ("products/x.png").
             'image_url' => ['nullable', 'string', 'max:500', 'regex:#^(https?://[^\s]+|/(?!/)[^\s]*|[A-Za-z0-9_./-]+)$#', 'not_regex:#\.\.#'],

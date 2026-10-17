@@ -55,6 +55,8 @@ class ProductController extends Controller
                 'slug' => Slug::unique($data['name'], Product::class),
                 'hindi_name' => $data['hindi_name'] ?? null,
                 'description' => $data['description'] ?? null,
+                'ingredients' => $data['ingredients'] ?? null,
+                'how_to_use' => $data['how_to_use'] ?? null,
                 'image' => $this->normaliseImage($data['image_url'] ?? null),
                 'badge' => $data['badge'] ?? null,
                 'is_active' => $data['is_active'] ?? true,
@@ -87,6 +89,8 @@ class ProductController extends Controller
                 'name' => $data['name'],
                 'hindi_name' => $data['hindi_name'] ?? null,
                 'description' => $data['description'] ?? null,
+                'ingredients' => $data['ingredients'] ?? null,
+                'how_to_use' => $data['how_to_use'] ?? null,
                 'badge' => $data['badge'] ?? null,
                 'is_active' => $data['is_active'] ?? $product->is_active,
             ] + (array_key_exists('image_url', $data) ? ['image' => $this->normaliseImage($data['image_url'])] : []));

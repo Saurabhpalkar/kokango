@@ -2,11 +2,11 @@
 <AdminLayout active="settings">
   <div class="hd"><div><h1>Settings</h1><div class="sub">Store configuration</div></div></div>
 
-  <div v-if="loading" class="card state" style="border-radius:30px;max-width:860px">Loading settings&hellip;</div>
+  <div v-if="loading" class="card state" style="border-radius:18px;max-width:860px">Loading settings&hellip;</div>
   <div v-else-if="loadErr" class="errbox" role="alert" style="max-width:860px"><span>{{ loadErr }}</span><button type="button" @click="load">Retry</button></div>
 
   <form v-else novalidate @submit.prevent="save" style="display:flex;flex-direction:column;gap:24px;max-width:860px">
-    <section class="card" style="border-radius:30px;padding:28px">
+    <section class="card" style="border-radius:18px;padding:28px">
       <h2 style="margin:0 0 18px;font-size:19px;font-weight:800">Store details</h2>
       <div class="grid">
         <div><label class="lbl" for="sn">STORE NAME</label><input id="sn" class="in" v-model="s.store_name"><span v-if="errors.store_name" class="err">{{ errors.store_name }}</span></div>
@@ -17,7 +17,7 @@
       </div>
     </section>
 
-    <section class="card" style="border-radius:30px;padding:28px">
+    <section class="card" style="border-radius:18px;padding:28px">
       <h2 style="margin:0 0 18px;font-size:19px;font-weight:800">Shipping &amp; tax</h2>
       <div class="grid">
         <div><label class="lbl" for="sc">STANDARD SHIPPING (&#8377;)</label><input id="sc" class="in" type="number" min="0" step="0.01" v-model="s.shipping_standard"><span v-if="errors.shipping_standard_paise" class="err">{{ errors.shipping_standard_paise }}</span></div>
@@ -28,7 +28,7 @@
       </div>
     </section>
 
-    <section class="card" style="border-radius:30px;padding:28px">
+    <section class="card" style="border-radius:18px;padding:28px">
       <h2 style="margin:0 0 18px;font-size:19px;font-weight:800">Notifications</h2>
       <label class="lbl" for="ne">NOTIFICATION EMAIL</label><input id="ne" class="in" type="email" v-model="s.notification_email"><span v-if="errors.notification_email" class="err">{{ errors.notification_email }}</span>
     </section>

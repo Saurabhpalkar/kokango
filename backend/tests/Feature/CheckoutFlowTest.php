@@ -53,7 +53,7 @@ class CheckoutFlowTest extends TestCase
 
     private function cartToken(): string
     {
-        return $this->getJson(self::API.'/cart')->assertOk()->json('data.token');
+        return $this->getJson(self::API.'/cart')->assertCreated()->json('data.token');
     }
 
     private function addToCart(string $token, int $qty = 2): void

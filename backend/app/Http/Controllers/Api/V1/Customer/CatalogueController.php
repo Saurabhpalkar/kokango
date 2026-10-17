@@ -96,7 +96,10 @@ class CatalogueController extends Controller
                 'free_shipping_above_paise',
                 'free_shipping_note',
                 'whatsapp_number',
-            ]),
+            ]) + [
+                'cod_enabled' => (bool) config('kokango.cod.enabled'),
+                'cod_max_paise' => (int) config('kokango.cod.max_paise'),
+            ],
         ]);
     }
 }
