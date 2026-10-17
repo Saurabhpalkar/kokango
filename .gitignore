@@ -17,3 +17,4 @@ backend/database/database.sqlite
 backend.zip
 frontend/src.zip
 frontend/src-bkc/
+deploy/*.zip
